@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Static Hold Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+
+        <header class="app-header">
+            <div class="exercise-picker">
+                <select id="exerciseSelect"></select>
+                <button id="addExerciseBtn" class="icon-btn" title="Add Exercise">+</button>
+            </div>
+        </header>
+
+        <main id="view-timer" class="view active-view">
+            <div class="timer-card">
+                <div id="status">READY</div>
+                <div id="display">00:00.00</div>
+            </div>
+
+            <div class="settings-grid">
+                <div class="setting-box">
+                    <label for="prepTime">Prep (s)</label>
+                    <input type="number" id="prepTime" value="5">
+                </div>
+                <div class="setting-box">
+                    <label for="voiceStart">Voice @ (s)</label>
+                    <input type="number" id="voiceStart" value="30">
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="startBtn" class="btn primary-btn">START</button>
+                <button id="stopBtn" class="btn danger-btn" disabled>STOP</button>
+                <button id="resetBtn" class="btn secondary-btn">RESET</button>
+            </div>
+        </main>
+
+        <main id="view-history" class="view">
+            <h2 class="view-title">Performance</h2>
+            <div class="history-grid">
+                <div class="history-card">
+                    <h3>Recent</h3>
+                    <ul id="recentList" class="data-list"></ul>
+                </div>
+                <div class="history-card">
+                    <h3>Top 3 Bests</h3>
+                    <ul id="bestList" class="data-list"></ul>
+                </div>
+            </div>
+
+            <details class="all-history-accordion">
+                <summary>View All History</summary>
+                <ul id="allHistoryList" class="data-list full-list"></ul>
+            </details>
+        </main>
+
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-target="view-timer">
+                <span class="nav-icon">⏱️</span> Timer
+            </button>
+            <button class="nav-btn" data-target="view-history">
+                <span class="nav-icon">📊</span> History
+            </button>
+        </nav>
+
+        <div id="saveModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h3>Save Set</h3>
+                <p id="modalExerciseName" class="highlight-text"></p>
+                <p class="sub-text">Adjust time if you paused late:</p>
+
+                <div class="edit-timer">
+                    <input type="number" id="editMinutes" min="0"><span>m</span>
+                    <input type="number" id="editSeconds" min="0" max="59"><span>s</span>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="cancelSaveBtn" class="btn secondary-btn">Discard</button>
+                    <button id="confirmSaveBtn" class="btn primary-btn">Save</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
