@@ -1,4 +1,4 @@
-// DOM Elements
+// --- DOM Elements ---
 const display = document.getElementById("display");
 const status = document.getElementById("status");
 const prepTimeInput = document.getElementById("prepTime");
@@ -27,29 +27,26 @@ const allHistoryList = document.getElementById("allHistoryList");
 const navBtns = document.querySelectorAll(".nav-btn");
 const views = document.querySelectorAll(".view");
 
-// Timer State
+// --- Timer State ---
 let startTime, animationFrameId, prepEndTime;
-let isRunning = false,
-    isPrep = false;
-let elapsedTime = 0,
-    lastBeepSecond = 0;
+let isRunning = false;
+let isPrep = false;
+let elapsedTime = 0;
+let lastBeepSecond = 0;
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 // --- 1. Navigation Logic ---
 navBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
-        // Update active button
         navBtns.forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
 
-        // Update active view
         views.forEach((v) => v.classList.remove("active-view"));
         document
             .getElementById(btn.dataset.target)
             .classList.add("active-view");
 
-        // Refresh history if history tab clicked
         if (btn.dataset.target === "view-history") updateHistoryUI();
     });
 });
@@ -149,6 +146,12 @@ function playSound(type) {
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.1);
+    } else if (type === "start") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
     } else if (type === "10sec") {
         osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
         osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.15);
@@ -191,6 +194,7 @@ function update() {
             status.textContent = "HOLD!";
             status.style.color = "var(--accent-green)";
             lastBeepSecond = 0;
+            playSound("start");
         } else {
             display.textContent = formatTime(remaining);
             if (Math.ceil(remaining / 1000) !== lastBeepSecond) {
@@ -202,12 +206,22 @@ function update() {
         elapsedTime = now - startTime;
         display.textContent = formatTime(elapsedTime);
         const curSec = Math.floor(elapsedTime / 1000);
+
         if (curSec > lastBeepSecond) {
             lastBeepSecond = curSec;
-            if (curSec >= parseInt(voiceStartInput.value || 999))
+
+            // Trigger interval beeps
+            if (curSec % 10 === 0) {
+                playSound("10sec");
+            } else if (curSec % 5 === 0) {
+                playSound("5sec");
+            }
+
+            // Trigger voice count (independent of beeps)
+            const voiceThreshold = parseInt(voiceStartInput.value || 999);
+            if (curSec >= voiceThreshold) {
                 speak(curSec.toString());
-            else if (curSec % 10 === 0) playSound("10sec");
-            else if (curSec % 5 === 0) playSound("5sec");
+            }
         }
     }
     if (isRunning || isPrep) animationFrameId = requestAnimationFrame(update);
@@ -220,7 +234,6 @@ startBtn.addEventListener("click", () => {
     stopBtn.disabled = false;
     resetBtn.disabled = true;
 
-    // Lock settings and exercise while running
     prepTimeInput.disabled = true;
     voiceStartInput.disabled = true;
     exerciseSelect.disabled = true;
@@ -249,17 +262,14 @@ stopBtn.addEventListener("click", () => {
     status.textContent = "FINISHED";
     status.style.color = "var(--text-main)";
 
-    // Open Modal
     modalExerciseName.textContent = exerciseSelect.value;
     editMinutes.value = Math.floor(elapsedTime / 60000);
     editSeconds.value = Math.floor((elapsedTime % 60000) / 1000);
     saveModal.classList.remove("hidden");
 });
 
-// Modal Actions
 cancelSaveBtn.addEventListener("click", () => {
     saveModal.classList.add("hidden");
-    // We don't reset UI here, leaving timer paused if they want to resume
     startBtn.disabled = false;
     stopBtn.disabled = true;
     status.textContent = "PAUSED";
@@ -278,6 +288,7 @@ confirmSaveBtn.addEventListener("click", () => {
 
 function resetUI() {
     elapsedTime = 0;
+    lastBeepSecond = 0;
     display.textContent = "00:00.00";
     status.textContent = "READY";
     status.style.color = "var(--text-muted)";
@@ -287,9 +298,10 @@ function resetUI() {
     prepTimeInput.disabled = false;
     voiceStartInput.disabled = false;
     exerciseSelect.disabled = false;
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
 }
 
 resetBtn.addEventListener("click", resetUI);
 
-// Init
+// --- Initialize ---
 updateDropdown();

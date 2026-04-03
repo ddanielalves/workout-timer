@@ -53,7 +53,7 @@ select { flex: 1; background: var(--card-bg); color: var(--text-main); border: 1
 .btn { border: none; border-radius: 14px; padding: 18px; font-size: 1.1rem; font-weight: 700; cursor: pointer; color: white; transition: opacity 0.2s, transform 0.1s; }
 .btn:active { transform: scale(0.96); }
 .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
-.primary-btn { background: var(--accent-green); flex: 1; min-width: 100%; }
+.primary-btn { background: var(--accent-green); flex: 1; }
 .danger-btn { background: var(--accent-red); flex: 1; }
 .secondary-btn { background: var(--card-bg); flex: 1; color: var(--text-main); border: 1px solid var(--border); }
 
@@ -95,5 +95,10 @@ select { flex: 1; background: var(--card-bg); color: var(--text-main); border: 1
 .edit-timer input { width: 70px; font-size: 2rem; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border); text-align: center; border-radius: 10px; padding: 10px; font-weight: bold; outline: none; }
 .edit-timer span { font-size: 1.2rem; color: var(--text-muted); }
 .modal-actions { display: flex; gap: 10px; }
+
+.modal-actions .btn { 
+    padding: 14px; 
+    font-size: 1rem; 
+}
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
