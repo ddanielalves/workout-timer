@@ -42,7 +42,13 @@ select { flex: 1; background: var(--card-bg); color: var(--text-main); border: 1
 /* Timer Elements */
 .timer-card { text-align: center; padding: 40px 0; }
 #status { font-size: 1.2rem; font-weight: 700; letter-spacing: 2px; margin-bottom: 10px; color: var(--text-muted); }
-#display { font-size: 5rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+#display {
+    font-size: 5rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+    padding-left: 0.25ch;
+}
 
 .settings-grid { display: flex; gap: 15px; }
 .setting-box { flex: 1; background: var(--card-bg); padding: 12px; border-radius: 12px; text-align: center; }
