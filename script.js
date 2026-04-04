@@ -6,6 +6,7 @@ const voiceStartInput = document.getElementById("voiceStart");
 const startBtn = document.getElementById("startBtn");
 const stopBtn = document.getElementById("stopBtn");
 const resetBtn = document.getElementById("resetBtn");
+const enableSoundBtn = document.getElementById("enableSoundBtn");
 
 const exerciseSelect = document.getElementById("exerciseSelect");
 const addExerciseBtn = document.getElementById("addExerciseBtn");
@@ -41,6 +42,40 @@ let elapsedTime = 0;
 let lastBeepSecond = 0;
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let audioUnlocked = false;
+let voicesPrimed = false;
+
+async function unlockAudio() {
+    try {
+        if (audioCtx.state !== "running") await audioCtx.resume();
+
+        // iOS sometimes needs a real graph start/stop from a user gesture.
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.0001;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.02);
+
+        audioUnlocked = true;
+        if (enableSoundBtn) {
+            enableSoundBtn.textContent = "ON";
+            enableSoundBtn.title = "Sound Enabled";
+            enableSoundBtn.disabled = true;
+        }
+        return true;
+    } catch (err) {
+        console.warn("Audio unlock failed:", err);
+        return false;
+    }
+}
+
+function primeSpeechSynthesis() {
+    if (!("speechSynthesis" in window) || voicesPrimed) return;
+    window.speechSynthesis.getVoices();
+    voicesPrimed = true;
+}
 
 // --- Wake Lock / NoSleep Integration ---
 let wakeLock = null;
@@ -250,7 +285,7 @@ saveExerciseBtn.addEventListener("click", () => {
 
 // --- 4. Audio & Speech Logic ---
 function playSound(type) {
-    if (audioCtx.state === "suspended") audioCtx.resume();
+    if (!audioUnlocked || audioCtx.state !== "running") return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.connect(gain);
@@ -283,9 +318,12 @@ function playSound(type) {
 }
 
 function speak(text) {
+    if (!audioUnlocked || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const msg = new SpeechSynthesisUtterance(text);
     msg.rate = 1.5;
+    const voices = window.speechSynthesis.getVoices();
+    if (voices && voices.length > 0) msg.voice = voices[0];
     window.speechSynthesis.speak(msg);
 }
 
@@ -344,7 +382,8 @@ function update() {
 
 // --- 6. Main Controls ---
 startBtn.addEventListener("click", () => {
-    audioCtx.resume();
+    unlockAudio();
+    primeSpeechSynthesis();
     startBtn.disabled = true;
     stopBtn.disabled = false;
     resetBtn.disabled = true;
@@ -432,6 +471,31 @@ function resetUI() {
 }
 
 resetBtn.addEventListener("click", resetUI);
+
+if (enableSoundBtn) {
+    enableSoundBtn.addEventListener("click", async () => {
+        await unlockAudio();
+        primeSpeechSynthesis();
+    });
+}
+
+// Best-effort auto-unlock on first user interaction for iOS browsers.
+const autoUnlockHandler = async () => {
+    await unlockAudio();
+    primeSpeechSynthesis();
+    document.removeEventListener("touchstart", autoUnlockHandler);
+    document.removeEventListener("pointerdown", autoUnlockHandler);
+};
+
+document.addEventListener("touchstart", autoUnlockHandler, { passive: true });
+document.addEventListener("pointerdown", autoUnlockHandler, { passive: true });
+
+if ("speechSynthesis" in window) {
+    window.speechSynthesis.addEventListener(
+        "voiceschanged",
+        primeSpeechSynthesis,
+    );
+}
 
 // --- Initialize ---
 // Re-request wake lock when page becomes visible again (some browsers require re-request)
