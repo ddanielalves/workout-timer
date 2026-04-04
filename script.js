@@ -23,6 +23,12 @@ const recentList = document.getElementById("recentList");
 const bestList = document.getElementById("bestList");
 const allHistoryList = document.getElementById("allHistoryList");
 
+// Settings Elements
+const saveDefaultBtn = document.getElementById("saveDefaultBtn");
+const saveExerciseBtn = document.getElementById("saveExerciseBtn");
+const saveExerciseLabel = document.getElementById("saveExerciseLabel");
+const settingsPill = document.getElementById("settingsPill");
+
 // Navigation Elements
 const navBtns = document.querySelectorAll(".nav-btn");
 const views = document.querySelectorAll(".view");
@@ -53,8 +59,6 @@ navBtns.forEach((btn) => {
 
 // --- 2. Exercise & Storage Logic ---
 let exercises = JSON.parse(localStorage.getItem("myExercises")) || [
-    "Plank",
-    "L-Sit",
     "Dead Hang",
 ];
 
@@ -63,9 +67,15 @@ function updateDropdown() {
         .map((ex) => `<option value="${ex}">${ex}</option>`)
         .join("");
     updateHistoryUI();
+    loadSettings(exerciseSelect.value);
+    updateSaveExerciseLabel();
 }
 
-exerciseSelect.addEventListener("change", updateHistoryUI);
+exerciseSelect.addEventListener("change", () => {
+    updateHistoryUI();
+    loadSettings(exerciseSelect.value);
+    updateSaveExerciseLabel();
+});
 
 addExerciseBtn.addEventListener("click", () => {
     const name = prompt("Enter new exercise name:");
@@ -75,6 +85,8 @@ addExerciseBtn.addEventListener("click", () => {
         updateDropdown();
         exerciseSelect.value = name.trim();
         updateHistoryUI();
+        loadSettings(name.trim());
+        updateSaveExerciseLabel();
     }
 });
 
@@ -133,7 +145,65 @@ function saveWorkout(data) {
     saveModal.classList.add("hidden");
 }
 
-// --- 3. Audio & Speech Logic ---
+// --- 3. Settings Logic ---
+function loadSettings(exerciseName) {
+    const saved =
+        JSON.parse(localStorage.getItem(`settings_ex_${exerciseName}`)) ||
+        JSON.parse(localStorage.getItem("settings_default"));
+    if (saved) {
+        if (saved.prepTime != null) prepTimeInput.value = saved.prepTime;
+        if (saved.voiceStart != null) voiceStartInput.value = saved.voiceStart;
+    }
+    updateSettingsPill();
+}
+
+function updateSettingsPill() {
+    const prep = parseInt(prepTimeInput.value) || 0;
+    const voice = parseInt(voiceStartInput.value) || 0;
+    settingsPill.innerHTML =
+        `<span class="pill-item">Prep <strong>${prep}s</strong></span>` +
+        `<span class="pill-item">Voice @ <strong>${voice}s</strong></span>`;
+}
+
+function updateSaveExerciseLabel() {
+    if (saveExerciseLabel) saveExerciseLabel.textContent = exerciseSelect.value;
+}
+
+function flashBtn(btn) {
+    const original = btn.innerHTML;
+    btn.innerHTML = "Saved ✓";
+    btn.disabled = true;
+    setTimeout(() => {
+        btn.innerHTML = original;
+        btn.disabled = false;
+    }, 1500);
+}
+
+saveDefaultBtn.addEventListener("click", () => {
+    localStorage.setItem(
+        "settings_default",
+        JSON.stringify({
+            prepTime: parseInt(prepTimeInput.value) || 5,
+            voiceStart: parseInt(voiceStartInput.value) || 30,
+        }),
+    );
+    updateSettingsPill();
+    flashBtn(saveDefaultBtn);
+});
+
+saveExerciseBtn.addEventListener("click", () => {
+    localStorage.setItem(
+        `settings_ex_${exerciseSelect.value}`,
+        JSON.stringify({
+            prepTime: parseInt(prepTimeInput.value) || 5,
+            voiceStart: parseInt(voiceStartInput.value) || 30,
+        }),
+    );
+    updateSettingsPill();
+    flashBtn(saveExerciseBtn);
+});
+
+// --- 4. Audio & Speech Logic ---
 function playSound(type) {
     if (audioCtx.state === "suspended") audioCtx.resume();
     const osc = audioCtx.createOscillator();
@@ -174,7 +244,7 @@ function speak(text) {
     window.speechSynthesis.speak(msg);
 }
 
-// --- 4. Timer Core Logic ---
+// --- 5. Timer Core Logic ---
 function formatTime(ms) {
     const s = Math.floor(ms / 1000);
     const m = Math.floor(s / 60);
@@ -227,7 +297,7 @@ function update() {
     if (isRunning || isPrep) animationFrameId = requestAnimationFrame(update);
 }
 
-// --- 5. Main Controls ---
+// --- 6. Main Controls ---
 startBtn.addEventListener("click", () => {
     audioCtx.resume();
     startBtn.disabled = true;

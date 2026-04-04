@@ -24,16 +24,7 @@
                 <div id="display">00:00.00</div>
             </div>
 
-            <div class="settings-grid">
-                <div class="setting-box">
-                    <label for="prepTime">Prep (s)</label>
-                    <input type="number" id="prepTime" value="5">
-                </div>
-                <div class="setting-box">
-                    <label for="voiceStart">Voice @ (s)</label>
-                    <input type="number" id="voiceStart" value="30">
-                </div>
-            </div>
+            <div id="settingsPill" class="settings-pill"></div>
 
             <div class="controls">
                 <button id="startBtn" class="btn primary-btn">START</button>
@@ -61,12 +52,44 @@
             </details>
         </main>
 
+        <main id="view-settings" class="view">
+            <h2 class="view-title">Settings</h2>
+
+            <div class="setting-section">
+                <p class="setting-section-title">Timing</p>
+                <div class="settings-grid">
+                    <div class="setting-box">
+                        <label for="prepTime">Prep (s)</label>
+                        <input type="number" id="prepTime" value="5">
+                    </div>
+                    <div class="setting-box">
+                        <label for="voiceStart">Voice @ (s)</label>
+                        <input type="number" id="voiceStart" value="30">
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-section">
+                <p class="setting-section-title">Save Settings</p>
+                <p class="settings-note">Save as default for all exercises, or override for the selected exercise only.
+                </p>
+                <div class="save-settings-actions">
+                    <button id="saveDefaultBtn" class="btn secondary-btn">Save as Default</button>
+                    <button id="saveExerciseBtn" class="btn primary-btn">Save for "<span
+                            id="saveExerciseLabel"></span>"</button>
+                </div>
+            </div>
+        </main>
+
         <nav class="bottom-nav">
             <button class="nav-btn active" data-target="view-timer">
                 <span class="nav-icon">⏱️</span> Timer
             </button>
             <button class="nav-btn" data-target="view-history">
                 <span class="nav-icon">📊</span> History
+            </button>
+            <button class="nav-btn" data-target="view-settings">
+                <span class="nav-icon">⚙️</span> Settings
             </button>
         </nav>
 
