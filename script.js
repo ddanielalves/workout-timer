@@ -242,6 +242,7 @@ startBtn.addEventListener("click", () => {
     if (p > 0 && elapsedTime === 0) {
         isPrep = true;
         prepEndTime = Date.now() + p * 1000;
+        lastBeepSecond = p;
         status.textContent = "GET READY";
         status.style.color = "var(--accent-blue)";
     } else {
