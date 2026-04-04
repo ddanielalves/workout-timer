@@ -42,6 +42,51 @@ let lastBeepSecond = 0;
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
+// --- Wake Lock / NoSleep Integration ---
+let wakeLock = null;
+let noSleep = null;
+
+async function requestWakeLock() {
+    try {
+        if ("wakeLock" in navigator) {
+            wakeLock = await navigator.wakeLock.request("screen");
+            wakeLock.addEventListener("release", () => {
+                wakeLock = null;
+            });
+            return true;
+        }
+    } catch (err) {
+        console.warn("Wake Lock request failed:", err);
+    }
+    return false;
+}
+
+async function releaseWakeLock() {
+    try {
+        if (wakeLock) await wakeLock.release();
+        wakeLock = null;
+    } catch (err) {
+        console.warn("Wake Lock release failed:", err);
+    }
+}
+
+function enableNoSleep() {
+    try {
+        if (!noSleep && typeof NoSleep !== "undefined") noSleep = new NoSleep();
+        if (noSleep) noSleep.enable();
+    } catch (err) {
+        console.warn("NoSleep enable failed:", err);
+    }
+}
+
+function disableNoSleep() {
+    try {
+        if (noSleep) noSleep.disable();
+    } catch (err) {
+        console.warn("NoSleep disable failed:", err);
+    }
+}
+
 // --- 1. Navigation Logic ---
 navBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -321,6 +366,11 @@ startBtn.addEventListener("click", () => {
         status.textContent = "HOLD!";
         status.style.color = "var(--accent-green)";
     }
+    // Try Wake Lock first; fall back to NoSleep when unsupported
+    requestWakeLock().then((granted) => {
+        if (!granted) enableNoSleep();
+    });
+
     update();
 });
 
@@ -328,6 +378,9 @@ stopBtn.addEventListener("click", () => {
     isRunning = false;
     isPrep = false;
     cancelAnimationFrame(animationFrameId);
+    // Release any wake locks or NoSleep when stopping
+    releaseWakeLock();
+    disableNoSleep();
     stopBtn.disabled = true;
     resetBtn.disabled = false;
     status.textContent = "FINISHED";
@@ -344,6 +397,9 @@ cancelSaveBtn.addEventListener("click", () => {
     startBtn.disabled = false;
     stopBtn.disabled = true;
     status.textContent = "PAUSED";
+    // stop preventing screen sleep when paused
+    releaseWakeLock();
+    disableNoSleep();
 });
 
 confirmSaveBtn.addEventListener("click", () => {
@@ -370,9 +426,20 @@ function resetUI() {
     voiceStartInput.disabled = false;
     exerciseSelect.disabled = false;
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    // release any locks when resetting
+    releaseWakeLock();
+    disableNoSleep();
 }
 
 resetBtn.addEventListener("click", resetUI);
 
 // --- Initialize ---
+// Re-request wake lock when page becomes visible again (some browsers require re-request)
+document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "visible" && (isRunning || isPrep)) {
+        const granted = await requestWakeLock();
+        if (!granted) enableNoSleep();
+    }
+});
+
 updateDropdown();
