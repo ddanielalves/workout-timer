@@ -33,6 +33,7 @@ const saveDefaultBtn = document.getElementById("saveDefaultBtn");
 const saveExerciseBtn = document.getElementById("saveExerciseBtn");
 const saveExerciseLabel = document.getElementById("saveExerciseLabel");
 const settingsPill = document.getElementById("settingsPill");
+const exerciseGoal = document.getElementById("exerciseGoal");
 
 // Navigation Elements
 const navBtns = document.querySelectorAll(".nav-btn");
@@ -156,10 +157,16 @@ function updateDropdown() {
 }
 
 exerciseSelect.addEventListener("change", () => {
-    updateHistoryUI();
     loadSettings(exerciseSelect.value);
     updateSaveExerciseLabel();
+    updateHistoryUI();
 });
+
+if (exerciseGoal) {
+    exerciseGoal.addEventListener("change", () => {
+        saveGoal(exerciseSelect.value, parseInt(exerciseGoal.value) || 0);
+    });
+}
 
 addExerciseBtn.addEventListener("click", () => {
     const name = prompt("Enter new exercise name:");
@@ -261,10 +268,10 @@ function updateHistoryUI() {
         recent.map(createLogListItem).join("") || emptyMsg;
 
     // Update chart
-    renderPerformanceChart(filtered);
+    renderPerformanceChart(filtered, selectedEx);
 }
 
-function renderPerformanceChart(logs) {
+function renderPerformanceChart(logs, exerciseName) {
     if (!performanceChartCanvas) return;
 
     // Sort logs by timestamp (oldest first)
@@ -301,14 +308,14 @@ function renderPerformanceChart(logs) {
 
     const data = sorted.map((log) => log.durationSeconds);
 
-    // Calculate trend line (simple moving average)
-    const windowSize = Math.min(3, sorted.length);
-    const trendData = data.map((_, idx) => {
-        const start = Math.max(0, idx - Math.floor(windowSize / 2));
-        const end = Math.min(data.length, idx + Math.floor(windowSize / 2) + 1);
-        const avg = data.slice(start, end).reduce((a, b) => a + b, 0) / (end - start);
-        return avg;
-    });
+    // Get goal and prepare goal line
+    const goal = getGoal(exerciseName);
+    const goalData = goal > 0 ? labels.map(() => goal) : null;
+
+    // Calculate y-axis max (slightly above max value and goal)
+    const maxData = Math.max(...data);
+    const maxValue = Math.max(maxData, goal);
+    const yAxisMax = Math.ceil(maxValue * 1.1); // 10% padding above max
 
     const ctx = performanceChartCanvas.getContext("2d");
 
@@ -317,35 +324,42 @@ function renderPerformanceChart(logs) {
         performanceChart.destroy();
     }
 
+    // Build datasets array
+    const datasets = [
+        {
+            label: "Best Hold Duration (s)",
+            data: data,
+            borderColor: "#30d158",
+            backgroundColor: "rgba(48, 209, 88, 0.35)",
+            borderWidth: 2,
+            pointRadius: 4,
+            pointBackgroundColor: "#30d158",
+            pointBorderColor: "#30d158",
+            pointBorderWidth: 2,
+            tension: 0.3,
+            fill: true,
+        },
+    ];
+
+    // Add goal line if goal is set
+    if (goalData) {
+        datasets.push({
+            label: "Goal",
+            data: goalData,
+            borderColor: "#0a84ff",
+            borderWidth: 2,
+            borderDash: [3, 3],
+            pointRadius: 0,
+            fill: false,
+            tension: 0,
+        });
+    }
+
     performanceChart = new Chart(ctx, {
         type: "line",
         data: {
             labels: labels,
-            datasets: [
-                {
-                    label: "Best Hold Duration (s)",
-                    data: data,
-                    borderColor: "#30d158",
-                    backgroundColor: "rgba(48, 209, 88, 0.35)",
-                    borderWidth: 2,
-                    pointRadius: 4,
-                    pointBackgroundColor: "#30d158",
-                    pointBorderColor: "#30d158",
-                    pointBorderWidth: 2,
-                    tension: 0.3,
-                    fill: true,
-                },
-                {
-                    label: "Trend",
-                    data: trendData,
-                    borderColor: "#9c9ca3",
-                    borderWidth: 2,
-                    borderDash: [5, 5],
-                    pointRadius: 0,
-                    fill: false,
-                    tension: 0.3,
-                },
-            ],
+            datasets: datasets,
         },
         options: {
             responsive: true,
@@ -376,6 +390,7 @@ function renderPerformanceChart(logs) {
             scales: {
                 y: {
                     beginAtZero: true,
+                    max: yAxisMax,
                     ticks: { color: "#b0b0b5", font: { size: 11, weight: "500" } },
                     grid: { color: "#2c2c2e", drawBorder: false },
                     title: { display: true, text: "Duration (seconds)", color: "#ffffff", font: { size: 12, weight: "600" } },
@@ -412,7 +427,21 @@ function loadSettings(exerciseName) {
         if (saved.prepTime != null) prepTimeInput.value = saved.prepTime;
         if (saved.voiceStart != null) voiceStartInput.value = saved.voiceStart;
     }
+
+    // Load goal
+    const goal = JSON.parse(localStorage.getItem(`goal_${exerciseName}`)) || 0;
+    if (exerciseGoal) exerciseGoal.value = goal;
+
     updateSettingsPill();
+}
+
+function saveGoal(exerciseName, goalSeconds) {
+    localStorage.setItem(`goal_${exerciseName}`, JSON.stringify(goalSeconds));
+    updateHistoryUI();
+}
+
+function getGoal(exerciseName) {
+    return parseInt(localStorage.getItem(`goal_${exerciseName}`)) || 0;
 }
 
 function updateSettingsPill() {
@@ -457,6 +486,10 @@ saveExerciseBtn.addEventListener("click", () => {
             voiceStart: parseInt(voiceStartInput.value) || 30,
         }),
     );
+
+    // Save goal
+    saveGoal(exerciseSelect.value, parseInt(exerciseGoal.value) || 0);
+
     updateSettingsPill();
     flashBtn(saveExerciseBtn);
 });
