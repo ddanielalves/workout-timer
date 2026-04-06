@@ -23,6 +23,10 @@ const modalExerciseName = document.getElementById("modalExerciseName");
 const recentList = document.getElementById("recentList");
 const bestList = document.getElementById("bestList");
 const allHistoryList = document.getElementById("allHistoryList");
+const performanceChartCanvas = document.getElementById("performanceChart");
+
+// Chart instance
+let performanceChart = null;
 
 // Settings Elements
 const saveDefaultBtn = document.getElementById("saveDefaultBtn");
@@ -194,11 +198,52 @@ function createLogListItem(log) {
             </li>`;
 }
 
+function generateDummyData(exerciseName) {
+    const dummyTemplates = {
+        "Dead Hang": [
+            { duration: 45, daysAgo: 14 },
+            { duration: 52, daysAgo: 12 },
+            { duration: 48, daysAgo: 10 },
+            { duration: 58, daysAgo: 8 },
+            { duration: 55, daysAgo: 6 },
+            { duration: 62, daysAgo: 4 },
+            { duration: 68, daysAgo: 2 },
+            { duration: 72, daysAgo: 1 },
+        ],
+    };
+
+    const template = dummyTemplates[exerciseName] || [
+        { duration: 30, daysAgo: 10 },
+        { duration: 35, daysAgo: 7 },
+        { duration: 40, daysAgo: 5 },
+        { duration: 42, daysAgo: 3 },
+        { duration: 45, daysAgo: 1 },
+    ];
+
+    const now = new Date();
+    return template.map((item) => {
+        const date = new Date(now);
+        date.setDate(date.getDate() - item.daysAgo);
+        date.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60), 0, 0);
+        return {
+            exercise: exerciseName,
+            durationSeconds: item.duration,
+            timestamp: date.toISOString(),
+        };
+    });
+}
+
 function updateHistoryUI() {
     const selectedEx = exerciseSelect.value;
-    const allLogs = JSON.parse(localStorage.getItem("workoutLogs")) || [];
+    let allLogs = JSON.parse(localStorage.getItem("workoutLogs")) || [];
 
-    const filtered = allLogs.filter((log) => log.exercise === selectedEx);
+    let filtered = allLogs.filter((log) => log.exercise === selectedEx);
+
+    // Generate dummy data if no data exists for this exercise
+    if (filtered.length === 0) {
+        filtered = generateDummyData(selectedEx);
+    }
+
     const recent = [...filtered].sort(
         (a, b) => new Date(b.timestamp) - new Date(a.timestamp),
     );
@@ -214,6 +259,139 @@ function updateHistoryUI() {
         best.slice(0, 3).map(createLogListItem).join("") || emptyMsg;
     allHistoryList.innerHTML =
         recent.map(createLogListItem).join("") || emptyMsg;
+
+    // Update chart
+    renderPerformanceChart(filtered);
+}
+
+function renderPerformanceChart(logs) {
+    if (!performanceChartCanvas) return;
+
+    // Sort logs by timestamp (oldest first)
+    let sorted = [...logs].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    if (sorted.length === 0) {
+        // Destroy existing chart if no data
+        if (performanceChart) {
+            performanceChart.destroy();
+            performanceChart = null;
+        }
+        return;
+    }
+
+    // Aggregate data to keep only the best time per day
+    const dailyBest = {};
+    sorted.forEach((log) => {
+        const d = new Date(log.timestamp);
+        const dateKey = d.toLocaleDateString(undefined, { year: "numeric", month: "2-digit", day: "2-digit" });
+
+        if (!dailyBest[dateKey] || log.durationSeconds > dailyBest[dateKey].durationSeconds) {
+            dailyBest[dateKey] = log;
+        }
+    });
+
+    // Convert back to sorted array
+    sorted = Object.values(dailyBest).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    // Prepare data
+    const labels = sorted.map((log) => {
+        const d = new Date(log.timestamp);
+        return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    });
+
+    const data = sorted.map((log) => log.durationSeconds);
+
+    // Calculate trend line (simple moving average)
+    const windowSize = Math.min(3, sorted.length);
+    const trendData = data.map((_, idx) => {
+        const start = Math.max(0, idx - Math.floor(windowSize / 2));
+        const end = Math.min(data.length, idx + Math.floor(windowSize / 2) + 1);
+        const avg = data.slice(start, end).reduce((a, b) => a + b, 0) / (end - start);
+        return avg;
+    });
+
+    const ctx = performanceChartCanvas.getContext("2d");
+
+    // Destroy existing chart to avoid memory leaks
+    if (performanceChart) {
+        performanceChart.destroy();
+    }
+
+    performanceChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Best Hold Duration (s)",
+                    data: data,
+                    borderColor: "var(--accent-green)",
+                    backgroundColor: "rgba(48, 209, 88, 0.1)",
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointBackgroundColor: "var(--accent-green)",
+                    pointBorderColor: "var(--card-bg)",
+                    pointBorderWidth: 2,
+                    tension: 0.3,
+                    fill: true,
+                },
+                {
+                    label: "Trend",
+                    data: trendData,
+                    borderColor: "var(--accent-blue)",
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.3,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: {
+                mode: "index",
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: "var(--text-muted)",
+                        font: { size: 11 },
+                        padding: 12,
+                    },
+                },
+                tooltip: {
+                    backgroundColor: "rgba(0, 0, 0, 0.8)",
+                    titleColor: "var(--text-main)",
+                    bodyColor: "var(--text-main)",
+                    borderColor: "var(--border)",
+                    borderWidth: 1,
+                    padding: 10,
+                    displayColors: true,
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: "var(--text-muted)", font: { size: 10 } },
+                    grid: { color: "var(--border)", drawBorder: false },
+                    title: { display: true, text: "Duration (seconds)" },
+                },
+                x: {
+                    ticks: {
+                        color: "var(--text-muted)",
+                        font: { size: 9 },
+                        maxRotation: 45,
+                        minRotation: 0,
+                    },
+                    grid: { display: false },
+                },
+            },
+        },
+    });
 }
 
 function saveWorkout(data) {

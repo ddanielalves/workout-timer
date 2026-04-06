@@ -137,4 +137,9 @@ select { flex: 1; background: var(--card-bg); color: var(--text-main); border: 1
 .settings-note { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
 .save-settings-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
+/* Chart */
+.chart-container { background: var(--card-bg); padding: 15px; border-radius: 12px; }
+.chart-container h3 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+.chart-container canvas { max-height: 250px; }
+
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
