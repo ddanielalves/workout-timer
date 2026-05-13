@@ -3,6 +3,7 @@ const display = document.getElementById("display");
 const status = document.getElementById("status");
 const prepTimeInput = document.getElementById("prepTime");
 const voiceStartInput = document.getElementById("voiceStart");
+const restTimeInput = document.getElementById("restTime");
 const startBtn = document.getElementById("startBtn");
 const stopBtn = document.getElementById("stopBtn");
 const resetBtn = document.getElementById("resetBtn");
@@ -52,6 +53,9 @@ let isRunning = false;
 let isPrep = false;
 let elapsedTime = 0;
 let lastBeepSecond = 0;
+let isResting = false;
+let restEndTime = 0;
+let restAnimFrameId = null;
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let audioUnlocked = false;
@@ -423,6 +427,7 @@ function saveWorkout(data) {
     updateHistoryUI();
     resetUI();
     saveModal.classList.add("hidden");
+    startRestTimer();
 }
 
 // --- 3. Settings Logic ---
@@ -433,6 +438,7 @@ function loadSettings(exerciseName) {
     if (saved) {
         if (saved.prepTime != null) prepTimeInput.value = saved.prepTime;
         if (saved.voiceStart != null) voiceStartInput.value = saved.voiceStart;
+        if (saved.restTime != null) restTimeInput.value = saved.restTime;
     }
 
     // Load goal
@@ -454,9 +460,11 @@ function getGoal(exerciseName) {
 function updateSettingsPill() {
     const prep = parseInt(prepTimeInput.value) || 0;
     const voice = parseInt(voiceStartInput.value) || 0;
+    const rest = isNaN(parseInt(restTimeInput.value)) ? 0 : parseInt(restTimeInput.value);
     settingsPill.innerHTML =
         `<span class="pill-item" data-field="prep">Prep <strong>${prep}s</strong></span>` +
-        `<span class="pill-item" data-field="voice">Voice @ <strong>${voice}s</strong></span>`;
+        `<span class="pill-item" data-field="voice">Voice @ <strong>${voice}s</strong></span>` +
+        `<span class="pill-item" data-field="rest">Rest <strong>${rest}s</strong></span>`;
 }
 
 let _currentEditField = null;
@@ -468,10 +476,13 @@ settingsPill.addEventListener("click", (e) => {
     _currentEditField = pill.dataset.field;
     if (_currentEditField === "prep") {
         settingEditTitle.textContent = "Prep Time";
-        settingEditInput.value = parseInt(prepTimeInput.value) || 0;
-    } else {
+        settingEditInput.value = isNaN(parseInt(prepTimeInput.value)) ? 0 : parseInt(prepTimeInput.value);
+    } else if (_currentEditField === "voice") {
         settingEditTitle.textContent = "Voice Start";
-        settingEditInput.value = parseInt(voiceStartInput.value) || 0;
+        settingEditInput.value = isNaN(parseInt(voiceStartInput.value)) ? 0 : parseInt(voiceStartInput.value);
+    } else {
+        settingEditTitle.textContent = "Rest Time";
+        settingEditInput.value = isNaN(parseInt(restTimeInput.value)) ? 0 : parseInt(restTimeInput.value);
     }
     settingEditModal.classList.remove("hidden");
     setTimeout(() => { settingEditInput.focus(); settingEditInput.select(); }, 50);
@@ -485,12 +496,15 @@ function applySettingEdit() {
     const val = Math.max(0, parseInt(settingEditInput.value) || 0);
     if (_currentEditField === "prep") {
         prepTimeInput.value = val;
-    } else {
+    } else if (_currentEditField === "voice") {
         voiceStartInput.value = val;
+    } else {
+        restTimeInput.value = val;
     }
     const payload = JSON.stringify({
         prepTime: isNaN(parseInt(prepTimeInput.value)) ? 5 : parseInt(prepTimeInput.value),
         voiceStart: isNaN(parseInt(voiceStartInput.value)) ? 30 : parseInt(voiceStartInput.value),
+        restTime: isNaN(parseInt(restTimeInput.value)) ? 0 : parseInt(restTimeInput.value),
     });
     localStorage.setItem(`settings_ex_${exerciseSelect.value}`, payload);
     localStorage.setItem("settings_default", payload);
@@ -525,6 +539,7 @@ saveDefaultBtn.addEventListener("click", () => {
         JSON.stringify({
             prepTime: isNaN(parseInt(prepTimeInput.value)) ? 5 : parseInt(prepTimeInput.value),
             voiceStart: isNaN(parseInt(voiceStartInput.value)) ? 30 : parseInt(voiceStartInput.value),
+            restTime: isNaN(parseInt(restTimeInput.value)) ? 0 : parseInt(restTimeInput.value),
         }),
     );
     updateSettingsPill();
@@ -537,6 +552,7 @@ saveExerciseBtn.addEventListener("click", () => {
         JSON.stringify({
             prepTime: isNaN(parseInt(prepTimeInput.value)) ? 5 : parseInt(prepTimeInput.value),
             voiceStart: isNaN(parseInt(voiceStartInput.value)) ? 30 : parseInt(voiceStartInput.value),
+            restTime: isNaN(parseInt(restTimeInput.value)) ? 0 : parseInt(restTimeInput.value),
         }),
     );
 
@@ -716,7 +732,49 @@ confirmSaveBtn.addEventListener("click", () => {
     });
 });
 
+// --- Rest Timer ---
+function startRestTimer() {
+    const restSecs = isNaN(parseInt(restTimeInput.value)) ? 0 : parseInt(restTimeInput.value);
+    if (restSecs <= 0) return;
+    isResting = true;
+    restEndTime = Date.now() + restSecs * 1000;
+    status.textContent = "REST";
+    status.style.color = "var(--accent-red)";
+    display.style.color = "var(--accent-red)";
+    startBtn.disabled = true;
+    stopBtn.disabled = true;
+    resetBtn.disabled = false;
+    resetBtn.textContent = "SKIP";
+    tickRest();
+}
+
+function tickRest() {
+    if (!isResting) return;
+    const remaining = restEndTime - Date.now();
+    if (remaining <= 0) {
+        finishRest();
+        return;
+    }
+    display.textContent = formatTime(remaining);
+    restAnimFrameId = requestAnimationFrame(tickRest);
+}
+
+function finishRest() {
+    isResting = false;
+    cancelAnimationFrame(restAnimFrameId);
+    display.style.color = "";
+    resetBtn.textContent = "RESET";
+    playSound("start");
+    resetUI();
+}
+
 function resetUI() {
+    if (isResting) {
+        isResting = false;
+        cancelAnimationFrame(restAnimFrameId);
+        display.style.color = "";
+        resetBtn.textContent = "RESET";
+    }
     elapsedTime = 0;
     lastBeepSecond = 0;
     display.textContent = "00:00.00";
