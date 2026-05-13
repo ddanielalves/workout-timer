@@ -146,7 +146,9 @@ select { flex: 1; background: var(--card-bg); color: var(--text-main); border: 1
 
 /* Settings Pill (timer view summary) */
 .settings-pill { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-.settings-pill .pill-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 5px; align-items: center; }
+.settings-pill .pill-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 5px; align-items: center; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+.settings-pill .pill-item:hover { border-color: var(--accent-blue); color: var(--text-main); }
+.settings-pill .pill-item:active { transform: scale(0.96); }
 .settings-pill .pill-item strong { color: var(--text-main); font-weight: 600; }
 
 /* Settings View */

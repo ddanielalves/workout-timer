@@ -11,6 +11,13 @@ const enableSoundBtn = document.getElementById("enableSoundBtn");
 const exerciseSelect = document.getElementById("exerciseSelect");
 const addExerciseBtn = document.getElementById("addExerciseBtn");
 
+// Setting Edit Modal Elements
+const settingEditModal = document.getElementById("settingEditModal");
+const settingEditTitle = document.getElementById("settingEditTitle");
+const settingEditInput = document.getElementById("settingEditInput");
+const confirmSettingEditBtn = document.getElementById("confirmSettingEditBtn");
+const cancelSettingEditBtn = document.getElementById("cancelSettingEditBtn");
+
 // Modal Elements
 const saveModal = document.getElementById("saveModal");
 const confirmSaveBtn = document.getElementById("confirmSaveBtn");
@@ -448,9 +455,55 @@ function updateSettingsPill() {
     const prep = parseInt(prepTimeInput.value) || 0;
     const voice = parseInt(voiceStartInput.value) || 0;
     settingsPill.innerHTML =
-        `<span class="pill-item">Prep <strong>${prep}s</strong></span>` +
-        `<span class="pill-item">Voice @ <strong>${voice}s</strong></span>`;
+        `<span class="pill-item" data-field="prep">Prep <strong>${prep}s</strong></span>` +
+        `<span class="pill-item" data-field="voice">Voice @ <strong>${voice}s</strong></span>`;
 }
+
+let _currentEditField = null;
+
+settingsPill.addEventListener("click", (e) => {
+    if (isRunning || isPrep) return;
+    const pill = e.target.closest(".pill-item");
+    if (!pill) return;
+    _currentEditField = pill.dataset.field;
+    if (_currentEditField === "prep") {
+        settingEditTitle.textContent = "Prep Time";
+        settingEditInput.value = parseInt(prepTimeInput.value) || 0;
+    } else {
+        settingEditTitle.textContent = "Voice Start";
+        settingEditInput.value = parseInt(voiceStartInput.value) || 0;
+    }
+    settingEditModal.classList.remove("hidden");
+    setTimeout(() => { settingEditInput.focus(); settingEditInput.select(); }, 50);
+});
+
+cancelSettingEditBtn.addEventListener("click", () => {
+    settingEditModal.classList.add("hidden");
+});
+
+function applySettingEdit() {
+    const val = Math.max(0, parseInt(settingEditInput.value) || 0);
+    if (_currentEditField === "prep") {
+        prepTimeInput.value = val;
+    } else {
+        voiceStartInput.value = val;
+    }
+    const payload = JSON.stringify({
+        prepTime: isNaN(parseInt(prepTimeInput.value)) ? 5 : parseInt(prepTimeInput.value),
+        voiceStart: isNaN(parseInt(voiceStartInput.value)) ? 30 : parseInt(voiceStartInput.value),
+    });
+    localStorage.setItem(`settings_ex_${exerciseSelect.value}`, payload);
+    localStorage.setItem("settings_default", payload);
+    updateSettingsPill();
+    settingEditModal.classList.add("hidden");
+}
+
+confirmSettingEditBtn.addEventListener("click", applySettingEdit);
+
+settingEditInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") applySettingEdit();
+    if (e.key === "Escape") settingEditModal.classList.add("hidden");
+});
 
 function updateSaveExerciseLabel() {
     if (saveExerciseLabel) saveExerciseLabel.textContent = exerciseSelect.value;
@@ -470,8 +523,8 @@ saveDefaultBtn.addEventListener("click", () => {
     localStorage.setItem(
         "settings_default",
         JSON.stringify({
-            prepTime: parseInt(prepTimeInput.value) || 5,
-            voiceStart: parseInt(voiceStartInput.value) || 30,
+            prepTime: isNaN(parseInt(prepTimeInput.value)) ? 5 : parseInt(prepTimeInput.value),
+            voiceStart: isNaN(parseInt(voiceStartInput.value)) ? 30 : parseInt(voiceStartInput.value),
         }),
     );
     updateSettingsPill();
@@ -482,8 +535,8 @@ saveExerciseBtn.addEventListener("click", () => {
     localStorage.setItem(
         `settings_ex_${exerciseSelect.value}`,
         JSON.stringify({
-            prepTime: parseInt(prepTimeInput.value) || 5,
-            voiceStart: parseInt(voiceStartInput.value) || 30,
+            prepTime: isNaN(parseInt(prepTimeInput.value)) ? 5 : parseInt(prepTimeInput.value),
+            voiceStart: isNaN(parseInt(voiceStartInput.value)) ? 30 : parseInt(voiceStartInput.value),
         }),
     );
 

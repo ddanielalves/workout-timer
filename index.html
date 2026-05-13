@@ -111,6 +111,19 @@
             </button>
         </nav>
 
+        <div id="settingEditModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h3 id="settingEditTitle">Edit Setting</h3>
+                <div class="edit-timer">
+                    <input type="number" id="settingEditInput" min="0"><span>s</span>
+                </div>
+                <div class="modal-actions">
+                    <button id="cancelSettingEditBtn" class="btn secondary-btn">Cancel</button>
+                    <button id="confirmSettingEditBtn" class="btn primary-btn">Save</button>
+                </div>
+            </div>
+        </div>
+
         <div id="saveModal" class="modal-overlay hidden">
             <div class="modal-content">
                 <h3>Save Set</h3>
