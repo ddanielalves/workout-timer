@@ -490,7 +490,7 @@ settingsPill.addEventListener("click", (e) => {
         restPresets.style.display = "flex";
     }
     settingEditModal.classList.remove("hidden");
-    setTimeout(() => { settingEditInput.focus(); settingEditInput.select(); }, 50);
+    setTimeout(() => { settingEditInput.focus(); settingEditInput.select(); }, 10);
 });
 
 cancelSettingEditBtn.addEventListener("click", () => {
@@ -721,6 +721,7 @@ stopBtn.addEventListener("click", () => {
     editMinutes.value = Math.floor(elapsedTime / 60000);
     editSeconds.value = Math.floor((elapsedTime % 60000) / 1000);
     saveModal.classList.remove("hidden");
+    setTimeout(() => { editMinutes.focus(); editMinutes.select(); }, 50);
 });
 
 cancelSaveBtn.addEventListener("click", () => {
