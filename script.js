@@ -18,6 +18,8 @@ const settingEditTitle = document.getElementById("settingEditTitle");
 const settingEditInput = document.getElementById("settingEditInput");
 const confirmSettingEditBtn = document.getElementById("confirmSettingEditBtn");
 const cancelSettingEditBtn = document.getElementById("cancelSettingEditBtn");
+const restPresets = document.getElementById("restPresets");
+const presetBtns = restPresets ? restPresets.querySelectorAll(".preset-btn") : [];
 
 // Modal Elements
 const saveModal = document.getElementById("saveModal");
@@ -477,12 +479,15 @@ settingsPill.addEventListener("click", (e) => {
     if (_currentEditField === "prep") {
         settingEditTitle.textContent = "Prep Time";
         settingEditInput.value = isNaN(parseInt(prepTimeInput.value)) ? 0 : parseInt(prepTimeInput.value);
+        restPresets.style.display = "none";
     } else if (_currentEditField === "voice") {
         settingEditTitle.textContent = "Voice Start";
         settingEditInput.value = isNaN(parseInt(voiceStartInput.value)) ? 0 : parseInt(voiceStartInput.value);
+        restPresets.style.display = "none";
     } else {
         settingEditTitle.textContent = "Rest Time";
         settingEditInput.value = isNaN(parseInt(restTimeInput.value)) ? 0 : parseInt(restTimeInput.value);
+        restPresets.style.display = "flex";
     }
     settingEditModal.classList.remove("hidden");
     setTimeout(() => { settingEditInput.focus(); settingEditInput.select(); }, 50);
@@ -517,6 +522,13 @@ confirmSettingEditBtn.addEventListener("click", applySettingEdit);
 settingEditInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") applySettingEdit();
     if (e.key === "Escape") settingEditModal.classList.add("hidden");
+});
+
+presetBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+        settingEditInput.value = btn.dataset.value;
+        applySettingEdit();
+    });
 });
 
 function updateSaveExerciseLabel() {
