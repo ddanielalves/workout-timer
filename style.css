@@ -37,10 +37,18 @@ body {
 
 /* Header & Inputs */
 .app-header { padding: 20px; background: var(--bg-dark); z-index: 10; border-bottom: 1px solid var(--border); }
-.exercise-picker { display: flex; gap: 10px; align-items: center; }
+.exercise-picker { display: flex; gap: 10px; align-items: center; width: 100%; }
 .picker-label { color: var(--text-muted); font-size: 0.9rem; min-width: 110px; }
 .stopwatch-picker { display: flex; flex-direction: column; gap: 10px; }
 .stopwatch-picker label { color: var(--text-muted); font-size: 0.85rem; }
+.exercise-picker-content { flex: 1; min-width: 0; }
+/* Header exercise select (hold) — full width, prominent and readable */
+#exerciseSelect { width: 100%; flex: 1; background: linear-gradient(180deg, var(--card-bg), rgba(255,255,255,0.02)); color: var(--text-main); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; font-size: 1.05rem; font-weight: 700; outline: none; -webkit-appearance: none; appearance: none; }
+#exerciseSelect:focus { box-shadow: 0 0 0 3px rgba(10,132,255,0.08); }
+
+/* Ensure the header add button stays compact */
+.exercise-picker .icon-btn { width: 44px; height: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+
 select { flex: 1; background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 1.1rem; font-weight: 600; outline: none; }
 .icon-btn { background: var(--card-bg); color: var(--accent-blue); border: 1px solid var(--border); border-radius: 10px; width: 48px; font-size: 1.5rem; font-weight: bold; cursor: pointer; }
 
@@ -233,13 +241,20 @@ select { flex: 1; background: var(--card-bg); color: var(--text-main); border: 1
 
 .stretch-exercise-picker select {
     width: 100%;
-    background: transparent;
+    background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 14px;
     color: var(--text-main);
     padding: 14px 16px;
     font-size: 1rem;
     outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.stretch-exercise-picker select option {
+    background: var(--card-bg);
+    color: var(--text-main);
 }
 
 .timer-picker-row { display: flex; gap: 8px; align-items: center; }
