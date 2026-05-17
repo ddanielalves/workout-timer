@@ -10,9 +10,12 @@ const resetBtn = document.getElementById("resetBtn");
 const enableSoundBtn = document.getElementById("enableSoundBtn");
 
 const exercisePickerLabel = document.getElementById("exercisePickerLabel");
+const exercisePickerContent = document.getElementById("exercisePickerContent");
 const exerciseSelect = document.getElementById("exerciseSelect");
 const addExerciseBtn = document.getElementById("addExerciseBtn");
-const stretchExerciseInput = document.getElementById("stretchExerciseInput");
+const timerExerciseSelect = document.getElementById("timerExerciseSelect");
+const timerExerciseSelectWrapper = document.getElementById("timerExerciseSelectWrapper");
+const addTimerExerciseBtn = document.getElementById("addTimerExerciseBtn");
 const stretchDurationInput = document.getElementById("stretchDurationInput");
 const stretchRestInput = document.getElementById("stretchRestInput");
 const addStretchExerciseBtn = document.getElementById("addStretchExerciseBtn");
@@ -183,25 +186,47 @@ let holdExercises = JSON.parse(localStorage.getItem("holdExercises")) || [
 let stretchRoutine = JSON.parse(localStorage.getItem("stretchRoutine")) || [];
 
 function updateExerciseDropdown() {
-    if (!exerciseSelect) return;
-    const list = activeView === "view-stretch" ? timerExercises : holdExercises;
+    if (!exerciseSelect || !timerExerciseSelect || !timerExerciseSelectWrapper) return;
 
-    exerciseSelect.innerHTML = list
-        .map((ex) => `<option value="${ex}">${ex}</option>`)
-        .join("");
+    const headerPicker = exercisePickerContent;
+    if (activeView === "view-stretch") {
+        if (headerPicker) headerPicker.style.display = "none";
+        if (addExerciseBtn) addExerciseBtn.style.display = "none";
+        if (timerExerciseSelectWrapper) timerExerciseSelectWrapper.style.display = "flex";
+        if (addTimerExerciseBtn) addTimerExerciseBtn.style.display = "inline-flex";
 
-    if (list.length > 0 && !list.includes(exerciseSelect.value)) {
-        exerciseSelect.selectedIndex = 0;
-    }
+        if (timerExerciseSelect) {
+            timerExerciseSelect.innerHTML = timerExercises
+                .map((ex) => `<option value="${ex}">${ex}</option>`)
+                .join("");
 
-    if (exercisePickerLabel) {
-        exercisePickerLabel.textContent =
-            activeView === "view-stretch" ? "Timer Exercises" : "Hold Exercises";
-    }
+            if (timerExercises.length > 0 && !timerExercises.includes(timerExerciseSelect.value)) {
+                timerExerciseSelect.selectedIndex = 0;
+            }
+        }
+    } else {
+        if (headerPicker) headerPicker.style.display = "flex";
+        if (addExerciseBtn) addExerciseBtn.style.display = "inline-flex";
+        if (timerExerciseSelectWrapper) timerExerciseSelectWrapper.style.display = "none";
+        if (addTimerExerciseBtn) addTimerExerciseBtn.style.display = "none";
 
-    if (activeView !== "view-stretch" && exerciseSelect.value) {
-        loadSettings(exerciseSelect.value);
-        updateSaveExerciseLabel();
+        if (exerciseSelect) {
+            exerciseSelect.innerHTML = holdExercises
+                .map((ex) => `<option value="${ex}">${ex}</option>`)
+                .join("");
+
+            if (holdExercises.length > 0 && !holdExercises.includes(exerciseSelect.value)) {
+                exerciseSelect.selectedIndex = 0;
+            }
+
+            if (exercisePickerLabel) {
+                exercisePickerLabel.textContent = "Hold Exercises";
+            }
+            if (exerciseSelect.value) {
+                loadSettings(exerciseSelect.value);
+                updateSaveExerciseLabel();
+            }
+        }
     }
 }
 
@@ -211,6 +236,25 @@ if (exerciseSelect) {
             loadSettings(exerciseSelect.value);
             updateSaveExerciseLabel();
             updateHistoryUI();
+        }
+    });
+}
+
+if (timerExerciseSelect) {
+    timerExerciseSelect.addEventListener("change", () => {
+        // Timer exercise selection only affects the stretch tab.
+    });
+}
+
+if (addTimerExerciseBtn) {
+    addTimerExerciseBtn.addEventListener("click", () => {
+        const name = prompt("Enter new timer exercise name:");
+        if (name && name.trim() !== "") {
+            const trimmed = name.trim();
+            timerExercises.push(trimmed);
+            localStorage.setItem("timerExercises", JSON.stringify(timerExercises));
+            updateExerciseDropdown();
+            if (timerExerciseSelect) timerExerciseSelect.value = trimmed;
         }
     });
 }
@@ -232,9 +276,11 @@ addExerciseBtn.addEventListener("click", () => {
         targetList.push(trimmed);
         localStorage.setItem(storageKey, JSON.stringify(targetList));
         updateExerciseDropdown();
-        exerciseSelect.value = trimmed;
 
-        if (activeView !== "view-stretch") {
+        if (activeView === "view-stretch") {
+            timerExerciseSelect.value = trimmed;
+        } else {
+            exerciseSelect.value = trimmed;
             loadSettings(trimmed);
             updateSaveExerciseLabel();
             updateHistoryUI();
@@ -244,12 +290,9 @@ addExerciseBtn.addEventListener("click", () => {
 
 if (addStretchExerciseBtn) {
     addStretchExerciseBtn.addEventListener("click", () => {
-        const name = stretchExerciseInput.value.trim();
-        if (!name) {
-            stretchExerciseInput.focus();
-            return;
-        }
+        if (!timerExerciseSelect || !timerExerciseSelect.value) return;
 
+        const name = timerExerciseSelect.value;
         const duration = parseInt(stretchDurationInput.value, 10) || 30;
         const rest = parseInt(stretchRestInput.value, 10) || 10;
 
@@ -257,10 +300,8 @@ if (addStretchExerciseBtn) {
         localStorage.setItem("stretchRoutine", JSON.stringify(stretchRoutine));
         renderStretchRoutine();
 
-        stretchExerciseInput.value = "";
         stretchDurationInput.value = "30";
         stretchRestInput.value = "10";
-        stretchExerciseInput.focus();
     });
 }
 

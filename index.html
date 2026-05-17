@@ -15,8 +15,10 @@
 
         <header class="app-header">
             <div class="exercise-picker">
-                <span id="exercisePickerLabel" class="picker-label">Hold Exercises</span>
-                <select id="exerciseSelect"></select>
+                <div id="exercisePickerContent" class="exercise-picker-content">
+                    <span id="exercisePickerLabel" class="picker-label">Hold Exercises</span>
+                    <select id="exerciseSelect"></select>
+                </div>
                 <button id="addExerciseBtn" class="icon-btn" title="Add Exercise">+</button>
             </div>
         </header>
@@ -42,7 +44,13 @@
             <h2 class="view-title">Stretch Timer</h2>
             <p class="settings-note">Build a stretch sequence with exercise time and rest time for each move.</p>
             <div class="stretch-form">
-                <input id="stretchExerciseInput" type="text" placeholder="Stretch name" />
+                <div id="timerExerciseSelectWrapper" class="stretch-exercise-picker">
+                    <label for="timerExerciseSelect">Choose timer exercise</label>
+                    <div class="timer-picker-row">
+                        <select id="timerExerciseSelect"></select>
+                        <button id="addTimerExerciseBtn" class="icon-btn" title="Add Timer Exercise">+</button>
+                    </div>
+                </div>
                 <div class="stretch-row">
                     <div class="setting-box">
                         <label for="stretchDurationInput">Duration (s)</label>

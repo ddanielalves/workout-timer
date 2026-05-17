@@ -219,6 +219,33 @@ select { flex: 1; background: var(--card-bg); color: var(--text-main); border: 1
     outline: none;
 }
 
+.stretch-exercise-picker {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stretch-exercise-picker label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.stretch-exercise-picker select {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--text-main);
+    padding: 14px 16px;
+    font-size: 1rem;
+    outline: none;
+}
+
+.timer-picker-row { display: flex; gap: 8px; align-items: center; }
+.timer-picker-row select { flex: 1; }
+.stretch-exercise-picker .icon-btn { width: 40px; height: 40px; padding: 0; font-size: 1.2rem; display: inline-flex; align-items: center; justify-content: center; }
+
 .stretch-row { display: flex; gap: 15px; }
 
 .stretch-actions { display: flex; flex-wrap: wrap; gap: 10px; }
