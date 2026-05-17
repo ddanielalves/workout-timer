@@ -20,7 +20,23 @@ const stretchDurationInput = document.getElementById("stretchDurationInput");
 const stretchRestInput = document.getElementById("stretchRestInput");
 const addStretchExerciseBtn = document.getElementById("addStretchExerciseBtn");
 const clearStretchRoutineBtn = document.getElementById("clearStretchRoutineBtn");
+const runStretchRoutineBtn = document.getElementById("runStretchRoutineBtn");
 const stretchRoutineList = document.getElementById("stretchRoutineList");
+const stretchForm = document.querySelector(".stretch-form");
+const stretchRunCard = document.getElementById("stretchRunCard");
+const stretchRunStatus = document.getElementById("stretchRunStatus");
+const stretchRunDisplay = document.getElementById("stretchRunDisplay");
+const stretchRunCurrent = document.getElementById("stretchRunCurrent");
+const pauseStretchBtn = document.getElementById("pauseStretchBtn");
+const stopStretchBtn = document.getElementById("stopStretchBtn");
+
+// --- Stretch Run State ---
+let stretchRunIndex = 0;
+let stretchRunPhase = null;
+let stretchRunEndTime = 0;
+let stretchRunTimerId = null;
+let stretchRunRemainingMs = 0;
+let isStretchPaused = false;
 
 // Setting Edit Modal Elements
 const settingEditModal = document.getElementById("settingEditModal");
@@ -305,12 +321,203 @@ if (addStretchExerciseBtn) {
     });
 }
 
-if (clearStretchRoutineBtn) {
-    clearStretchRoutineBtn.addEventListener("click", () => {
-        stretchRoutine = [];
-        localStorage.setItem("stretchRoutine", JSON.stringify(stretchRoutine));
-        renderStretchRoutine();
+if (runStretchRoutineBtn) {
+    runStretchRoutineBtn.addEventListener("click", startStretchRun);
+}
+
+if (pauseStretchBtn) {
+    pauseStretchBtn.addEventListener("click", () => {
+        if (isStretchPaused) {
+            resumeStretchRun();
+        } else {
+            pauseStretchRun();
+        }
     });
+}
+
+if (stopStretchBtn) {
+    stopStretchBtn.addEventListener("click", stopStretchRun);
+}
+
+function showStretchRunCard(show) {
+    if (stretchForm) stretchForm.classList.toggle("hidden", show);
+    if (stretchRunCard) stretchRunCard.classList.toggle("hidden", !show);
+}
+
+function updateStretchRunControls() {
+    if (pauseStretchBtn) {
+        pauseStretchBtn.textContent = isStretchPaused ? "Resume" : "Pause";
+        pauseStretchBtn.disabled = !stretchRunPhase || stretchRunPhase === "complete";
+    }
+    if (stopStretchBtn) {
+        stopStretchBtn.disabled = !stretchRunPhase || stretchRunPhase === "complete";
+    }
+}
+
+function updateStretchRunDisplay() {
+    if (!stretchRunStatus || !stretchRunDisplay || !stretchRunCurrent) return;
+
+    const timeText = formatCountdown(Math.max(0, stretchRunRemainingMs));
+    stretchRunDisplay.textContent = timeText;
+
+    if (stretchRunPhase === "prep") {
+        stretchRunStatus.textContent = "GET READY";
+        stretchRunStatus.style.color = "var(--accent-blue)";
+        stretchRunCurrent.textContent = stretchRoutine[0]
+            ? `Next: ${stretchRoutine[0].name}`
+            : "";
+    } else if (stretchRunPhase === "exercise") {
+        stretchRunStatus.textContent = "HOLD";
+        stretchRunStatus.style.color = "var(--accent-green)";
+        stretchRunCurrent.textContent = stretchRoutine[stretchRunIndex]
+            ? `Exercise: ${stretchRoutine[stretchRunIndex].name}`
+            : "";
+    } else if (stretchRunPhase === "rest") {
+        stretchRunStatus.textContent = "REST";
+        stretchRunStatus.style.color = "var(--accent-red)";
+        const nextIndex = stretchRunIndex + 1;
+        stretchRunCurrent.textContent = stretchRoutine[nextIndex]
+            ? `Next: ${stretchRoutine[nextIndex].name}`
+            : "Routine Complete Soon";
+    } else if (stretchRunPhase === "complete") {
+        stretchRunStatus.textContent = "COMPLETE";
+        stretchRunStatus.style.color = "var(--accent-blue)";
+        stretchRunCurrent.textContent = "Great job!";
+        stretchRunDisplay.textContent = "00:00";
+    }
+}
+
+function setStretchRunRemaining(ms) {
+    stretchRunRemainingMs = Math.max(0, ms);
+}
+
+function scheduleStretchRunTick() {
+    cancelAnimationFrame(stretchRunTimerId);
+    stretchRunTimerId = requestAnimationFrame(stretchRunTick);
+}
+
+function stretchRunTick() {
+    if (isStretchPaused || !stretchRunPhase || stretchRunPhase === "complete") return;
+
+    const remaining = stretchRunEndTime - Date.now();
+    if (remaining <= 0) {
+        advanceStretchRun();
+        return;
+    }
+
+    setStretchRunRemaining(remaining);
+    updateStretchRunDisplay();
+    stretchRunTimerId = requestAnimationFrame(stretchRunTick);
+}
+
+function startStretchRun() {
+    if (stretchRoutine.length === 0) {
+        alert("Add a stretch before starting the routine.");
+        return;
+    }
+
+    stretchRunIndex = 0;
+    stretchRunPhase = "prep";
+    isStretchPaused = false;
+    setStretchRunRemaining(5000);
+    stretchRunEndTime = Date.now() + 5000;
+
+    showStretchRunCard(true);
+    updateStretchRunDisplay();
+    updateStretchRunControls();
+    updateStretchRoutineHighlights();
+    scheduleStretchRunTick();
+}
+
+function advanceStretchRun() {
+    if (stretchRunPhase === "prep") {
+        stretchRunPhase = "exercise";
+    } else if (stretchRunPhase === "exercise") {
+        const current = stretchRoutine[stretchRunIndex];
+        if (current && current.rest > 0) {
+            stretchRunPhase = "rest";
+        } else {
+            stretchRunIndex += 1;
+            if (stretchRunIndex >= stretchRoutine.length) {
+                completeStretchRun();
+                return;
+            }
+            stretchRunPhase = "exercise";
+        }
+    } else if (stretchRunPhase === "rest") {
+        stretchRunIndex += 1;
+        if (stretchRunIndex >= stretchRoutine.length) {
+            completeStretchRun();
+            return;
+        }
+        stretchRunPhase = "exercise";
+    }
+
+    const current = stretchRoutine[stretchRunIndex];
+    if (!current) {
+        completeStretchRun();
+        return;
+    }
+
+    const nextDuration = stretchRunPhase === "exercise" ? current.duration * 1000 : current.rest * 1000;
+    setStretchRunRemaining(nextDuration);
+    stretchRunEndTime = Date.now() + nextDuration;
+
+    updateStretchRunDisplay();
+    updateStretchRunControls();
+    updateStretchRoutineHighlights();
+    scheduleStretchRunTick();
+}
+
+function pauseStretchRun() {
+    if (stretchRunPhase === "complete" || !stretchRunPhase) return;
+    isStretchPaused = true;
+    stretchRunRemainingMs = Math.max(0, stretchRunEndTime - Date.now());
+    cancelAnimationFrame(stretchRunTimerId);
+    updateStretchRunControls();
+    if (stretchRunStatus) {
+        stretchRunStatus.textContent = "PAUSED";
+        stretchRunStatus.style.color = "var(--text-muted)";
+    }
+}
+
+function resumeStretchRun() {
+    if (!stretchRunPhase || stretchRunPhase === "complete") return;
+    isStretchPaused = false;
+    stretchRunEndTime = Date.now() + stretchRunRemainingMs;
+    updateStretchRunControls();
+    scheduleStretchRunTick();
+}
+
+function stopStretchRun() {
+    cancelAnimationFrame(stretchRunTimerId);
+    resetStretchRunState();
+    showStretchRunCard(false);
+    renderStretchRoutine();
+}
+
+function completeStretchRun() {
+    stretchRunPhase = "complete";
+    isStretchPaused = false;
+    setStretchRunRemaining(0);
+    updateStretchRunDisplay();
+    updateStretchRunControls();
+    renderStretchRoutine();
+}
+
+function resetStretchRunState() {
+    stretchRunIndex = 0;
+    stretchRunPhase = null;
+    stretchRunEndTime = 0;
+    isStretchPaused = false;
+    setStretchRunRemaining(0);
+    if (pauseStretchBtn) {
+        pauseStretchBtn.textContent = "Pause";
+        pauseStretchBtn.disabled = true;
+    }
+    if (stopStretchBtn) {
+        stopStretchBtn.disabled = true;
+    }
 }
 
 if (stretchRoutineList) {
@@ -335,18 +542,35 @@ function renderStretchRoutine() {
     }
 
     stretchRoutineList.innerHTML = stretchRoutine
-        .map(
-            (item, index) => `
-                <li>
+        .map((item, index) => {
+            const isActive = stretchRunPhase && index === stretchRunIndex && stretchRunPhase !== "prep";
+            const phaseClass = isActive && stretchRunPhase === "rest" ? "resting" : "active";
+            const itemClass = isActive ? phaseClass : "";
+            return `
+                <li class="${itemClass}">
                     <div>
                         <strong>${item.name}</strong>
                         <div class="datetime">${item.duration}s · Rest ${item.rest}s</div>
                     </div>
                     <button class="remove-stretch-btn" data-index="${index}" title="Remove">×</button>
                 </li>
-            `,
-        )
+            `;
+        })
         .join("");
+}
+
+function updateStretchRoutineHighlights() {
+    if (!stretchRoutineList || !stretchRoutine.length) return;
+
+    const items = stretchRoutineList.querySelectorAll("li");
+    items.forEach((item, index) => {
+        item.classList.remove("active", "resting");
+        if (stretchRunPhase === "exercise" && index === stretchRunIndex) {
+            item.classList.add("active");
+        } else if (stretchRunPhase === "rest" && index === stretchRunIndex) {
+            item.classList.add("resting");
+        }
+    });
 }
 
 function formatHistoryDate(isoString) {
@@ -781,6 +1005,13 @@ function formatTime(ms) {
     const rs = s % 60;
     const rms = Math.floor((ms % 1000) / 10);
     return `${m.toString().padStart(2, "0")}:${rs.toString().padStart(2, "0")}.${rms.toString().padStart(2, "0")}`;
+}
+
+function formatCountdown(ms) {
+    const totalSeconds = Math.ceil(ms / 1000);
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
 function update() {

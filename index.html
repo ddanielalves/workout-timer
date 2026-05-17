@@ -41,7 +41,6 @@
 
         <main id="view-stretch" class="view">
             <h2 class="view-title">Stretch Timer</h2>
-            <p class="settings-note">Build a stretch sequence with exercise time and rest time for each move.</p>
             <div class="stretch-form">
                 <div id="timerExerciseSelectWrapper" class="stretch-exercise-picker">
                     <label for="timerExerciseSelect">Choose timer exercise</label>
@@ -62,13 +61,24 @@
                 </div>
                 <div class="stretch-actions">
                     <button id="addStretchExerciseBtn" class="btn secondary-btn">Add Stretch</button>
-                    <button id="clearStretchRoutineBtn" class="btn primary-btn" title="Play Stretch Routine">▶
+                    <button id="runStretchRoutineBtn" class="btn primary-btn" title="Play Stretch Routine">▶
                         Play</button>
+                </div>
+            </div>
+            <div id="stretchRunCard" class="stretch-run-card hidden">
+                <div class="timer-card">
+                    <div id="stretchRunStatus">GET READY</div>
+                    <div id="stretchRunDisplay">00:05</div>
+                    <div id="stretchRunCurrent" class="stretch-current"></div>
+                </div>
+                <div class="controls">
+                    <button id="pauseStretchBtn" class="btn secondary-btn">Pause</button>
+                    <button id="stopStretchBtn" class="btn danger-btn">Stop</button>
                 </div>
             </div>
             <div class="history-card">
                 <h3>Stretch Routine</h3>
-                <ul id="stretchRoutineList" class="data-list"></ul>
+                <ul id="stretchRoutineList" class="data-list stretch-routine-list"></ul>
             </div>
         </main>
 
