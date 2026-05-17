@@ -58,6 +58,10 @@
                         <label for="stretchRestInput">Rest (s)</label>
                         <input type="number" id="stretchRestInput" min="0" value="10">
                     </div>
+                    <div class="setting-box">
+                        <label for="stretchSetsInput">Sets</label>
+                        <input type="number" id="stretchSetsInput" min="1" value="1">
+                    </div>
                 </div>
                 <div class="stretch-actions">
                     <button id="addStretchExerciseBtn" class="btn secondary-btn">Add Stretch</button>
@@ -68,6 +72,7 @@
             <div id="stretchRunCard" class="stretch-run-card hidden">
                 <div class="timer-card">
                     <div id="stretchRunStatus">GET READY</div>
+                    <div id="stretchRunSet" class="stretch-set"></div>
                     <div id="stretchRunDisplay">00:05</div>
                     <div id="stretchRunCurrent" class="stretch-current"></div>
                 </div>

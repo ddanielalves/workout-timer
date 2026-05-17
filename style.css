@@ -282,6 +282,13 @@ select { flex: 1; background: var(--card-bg); color: var(--text-main); border: 1
     font-size: 0.95rem;
 }
 
+.stretch-run-card .stretch-set {
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-top: 6px;
+    font-size: 0.95rem;
+}
+
 .stretch-routine-list li.active {
     background: rgba(10, 132, 255, 0.12);
     border-color: rgba(10, 132, 255, 0.25);

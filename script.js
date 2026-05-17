@@ -22,6 +22,7 @@ const addStretchExerciseBtn = document.getElementById("addStretchExerciseBtn");
 const clearStretchRoutineBtn = document.getElementById("clearStretchRoutineBtn");
 const runStretchRoutineBtn = document.getElementById("runStretchRoutineBtn");
 const stretchRoutineList = document.getElementById("stretchRoutineList");
+const stretchSetsInput = document.getElementById("stretchSetsInput");
 const stretchForm = document.querySelector(".stretch-form");
 const stretchRunCard = document.getElementById("stretchRunCard");
 const stretchRunStatus = document.getElementById("stretchRunStatus");
@@ -37,6 +38,8 @@ let stretchRunEndTime = 0;
 let stretchRunTimerId = null;
 let stretchRunRemainingMs = 0;
 let isStretchPaused = false;
+let stretchRunTotalSets = 1;
+let stretchRunCurrentSet = 1;
 
 // Setting Edit Modal Elements
 const settingEditModal = document.getElementById("settingEditModal");
@@ -360,6 +363,10 @@ function updateStretchRunDisplay() {
     const timeText = formatCountdown(Math.max(0, stretchRunRemainingMs));
     stretchRunDisplay.textContent = timeText;
 
+    // Show set info if available
+    const setEl = document.getElementById("stretchRunSet");
+    if (setEl) setEl.textContent = `Set ${stretchRunCurrentSet}/${stretchRunTotalSets}`;
+
     if (stretchRunPhase === "prep") {
         stretchRunStatus.textContent = "GET READY";
         stretchRunStatus.style.color = "var(--accent-blue)";
@@ -416,9 +423,15 @@ function startStretchRun() {
         return;
     }
 
+    unlockAudio();
+    primeSpeechSynthesis();
+
+    // initialize sets and indexes
     stretchRunIndex = 0;
     stretchRunPhase = "prep";
     isStretchPaused = false;
+    stretchRunTotalSets = stretchSetsInput ? Math.max(1, parseInt(stretchSetsInput.value, 10) || 1) : 1;
+    stretchRunCurrentSet = 1;
     setStretchRunRemaining(5000);
     stretchRunEndTime = Date.now() + 5000;
 
@@ -432,25 +445,51 @@ function startStretchRun() {
 function advanceStretchRun() {
     if (stretchRunPhase === "prep") {
         stretchRunPhase = "exercise";
+        playSound("start");
     } else if (stretchRunPhase === "exercise") {
         const current = stretchRoutine[stretchRunIndex];
-        if (current && current.rest > 0) {
+        const isLastExerciseInRoutine = stretchRunIndex === stretchRoutine.length - 1;
+        const isFinalOverall = isLastExerciseInRoutine && stretchRunCurrentSet === stretchRunTotalSets;
+
+        // If not the last exercise in the routine and rest exists, go to rest
+        if (current && current.rest > 0 && !isLastExerciseInRoutine) {
             stretchRunPhase = "rest";
-        } else {
-            stretchRunIndex += 1;
-            if (stretchRunIndex >= stretchRoutine.length) {
+            playSound("start");
+        } else if (isLastExerciseInRoutine) {
+            // End of circuit: if more sets remain, start next set at index 0; otherwise finish
+            if (stretchRunCurrentSet < stretchRunTotalSets) {
+                stretchRunCurrentSet += 1;
+                stretchRunIndex = 0;
+                stretchRunPhase = "exercise";
+                playSound("start");
+            } else {
+                // final exercise of final set -> complete
                 completeStretchRun();
                 return;
             }
+        } else {
+            // move to next exercise in same set
+            stretchRunIndex += 1;
             stretchRunPhase = "exercise";
+            playSound("start");
         }
     } else if (stretchRunPhase === "rest") {
+        // After rest, advance to next exercise; if that goes past end, handle sets
         stretchRunIndex += 1;
         if (stretchRunIndex >= stretchRoutine.length) {
-            completeStretchRun();
-            return;
+            if (stretchRunCurrentSet < stretchRunTotalSets) {
+                stretchRunCurrentSet += 1;
+                stretchRunIndex = 0;
+                stretchRunPhase = "exercise";
+                playSound("start");
+            } else {
+                completeStretchRun();
+                return;
+            }
+        } else {
+            stretchRunPhase = "exercise";
+            playSound("start");
         }
-        stretchRunPhase = "exercise";
     }
 
     const current = stretchRoutine[stretchRunIndex];
@@ -500,6 +539,7 @@ function completeStretchRun() {
     stretchRunPhase = "complete";
     isStretchPaused = false;
     setStretchRunRemaining(0);
+    playSound("start");
     updateStretchRunDisplay();
     updateStretchRunControls();
     renderStretchRoutine();
@@ -957,34 +997,41 @@ saveExerciseBtn.addEventListener("click", () => {
 // --- 4. Audio & Speech Logic ---
 function playSound(type) {
     if (!audioUnlocked || audioCtx.state !== "running") return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+
+    // Helper to play a single tone with an ADSR-like envelope
+    function playTone(freq, type = "sine", duration = 0.15, peak = 0.12, when = 0) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now + when);
+        gain.gain.setValueAtTime(0.0001, now + when);
+        gain.gain.linearRampToValueAtTime(peak, now + when + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + when + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + when);
+        osc.stop(now + when + duration + 0.02);
+    }
 
     if (type === "prep") {
-        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
+        // short, crisp tick every second handled elsewhere; here a short high click
+        playTone(1400, "square", 0.08, 0.08);
     } else if (type === "start") {
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.4);
+        // pleasant two-tone chime
+        playTone(880, "sine", 0.22, 0.14, 0);
+        playTone(1320, "sine", 0.28, 0.10, 0.06);
     } else if (type === "10sec") {
-        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.3);
+        // two quick rising beeps
+        playTone(600, "sine", 0.12, 0.10, 0);
+        playTone(750, "sine", 0.12, 0.10, 0.12);
     } else if (type === "5sec") {
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
+        // brief alert
+        playTone(1000, "triangle", 0.10, 0.09, 0);
+    } else {
+        // default short click
+        playTone(800, "sine", 0.12, 0.08, 0);
     }
 }
 
