@@ -48,6 +48,7 @@ const exerciseGoal = document.getElementById("exerciseGoal");
 // Navigation Elements
 const navBtns = document.querySelectorAll(".nav-btn");
 const views = document.querySelectorAll(".view");
+const openHistoryBtn = document.getElementById("openHistoryBtn");
 
 // --- Timer State ---
 let startTime, animationFrameId, prepEndTime;
@@ -141,19 +142,22 @@ function disableNoSleep() {
 }
 
 // --- 1. Navigation Logic ---
+function showView(target) {
+    views.forEach((v) => v.classList.remove("active-view"));
+    const view = document.getElementById(target);
+    if (view) view.classList.add("active-view");
+
+    navBtns.forEach((b) => b.classList.toggle("active", b.dataset.target === target));
+    if (target === "view-history") updateHistoryUI();
+}
+
 navBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-        navBtns.forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-
-        views.forEach((v) => v.classList.remove("active-view"));
-        document
-            .getElementById(btn.dataset.target)
-            .classList.add("active-view");
-
-        if (btn.dataset.target === "view-history") updateHistoryUI();
-    });
+    btn.addEventListener("click", () => showView(btn.dataset.target));
 });
+
+if (openHistoryBtn) {
+    openHistoryBtn.addEventListener("click", () => showView("view-history"));
+}
 
 // --- 2. Exercise & Storage Logic ---
 let exercises = JSON.parse(localStorage.getItem("myExercises")) || [
