@@ -9,8 +9,15 @@ const stopBtn = document.getElementById("stopBtn");
 const resetBtn = document.getElementById("resetBtn");
 const enableSoundBtn = document.getElementById("enableSoundBtn");
 
+const exercisePickerLabel = document.getElementById("exercisePickerLabel");
 const exerciseSelect = document.getElementById("exerciseSelect");
 const addExerciseBtn = document.getElementById("addExerciseBtn");
+const stretchExerciseInput = document.getElementById("stretchExerciseInput");
+const stretchDurationInput = document.getElementById("stretchDurationInput");
+const stretchRestInput = document.getElementById("stretchRestInput");
+const addStretchExerciseBtn = document.getElementById("addStretchExerciseBtn");
+const clearStretchRoutineBtn = document.getElementById("clearStretchRoutineBtn");
+const stretchRoutineList = document.getElementById("stretchRoutineList");
 
 // Setting Edit Modal Elements
 const settingEditModal = document.getElementById("settingEditModal");
@@ -142,13 +149,18 @@ function disableNoSleep() {
 }
 
 // --- 1. Navigation Logic ---
+let activeView = "view-timer";
+
 function showView(target) {
+    activeView = target;
     views.forEach((v) => v.classList.remove("active-view"));
     const view = document.getElementById(target);
     if (view) view.classList.add("active-view");
 
     navBtns.forEach((b) => b.classList.toggle("active", b.dataset.target === target));
+    updateExerciseDropdown();
     if (target === "view-history") updateHistoryUI();
+    if (target === "view-stretch") renderStretchRoutine();
 }
 
 navBtns.forEach((btn) => {
@@ -160,24 +172,48 @@ if (openHistoryBtn) {
 }
 
 // --- 2. Exercise & Storage Logic ---
-let exercises = JSON.parse(localStorage.getItem("myExercises")) || [
+let timerExercises = JSON.parse(localStorage.getItem("timerExercises")) || [
+    "Hamstring Stretch",
+    "Quad Stretch",
+    "Shoulder Stretch",
+];
+let holdExercises = JSON.parse(localStorage.getItem("holdExercises")) || [
     "Dead Hang",
 ];
+let stretchRoutine = JSON.parse(localStorage.getItem("stretchRoutine")) || [];
 
-function updateDropdown() {
-    exerciseSelect.innerHTML = exercises
+function updateExerciseDropdown() {
+    if (!exerciseSelect) return;
+    const list = activeView === "view-stretch" ? timerExercises : holdExercises;
+
+    exerciseSelect.innerHTML = list
         .map((ex) => `<option value="${ex}">${ex}</option>`)
         .join("");
-    updateHistoryUI();
-    loadSettings(exerciseSelect.value);
-    updateSaveExerciseLabel();
+
+    if (list.length > 0 && !list.includes(exerciseSelect.value)) {
+        exerciseSelect.selectedIndex = 0;
+    }
+
+    if (exercisePickerLabel) {
+        exercisePickerLabel.textContent =
+            activeView === "view-stretch" ? "Timer Exercises" : "Hold Exercises";
+    }
+
+    if (activeView !== "view-stretch" && exerciseSelect.value) {
+        loadSettings(exerciseSelect.value);
+        updateSaveExerciseLabel();
+    }
 }
 
-exerciseSelect.addEventListener("change", () => {
-    loadSettings(exerciseSelect.value);
-    updateSaveExerciseLabel();
-    updateHistoryUI();
-});
+if (exerciseSelect) {
+    exerciseSelect.addEventListener("change", () => {
+        if (activeView !== "view-stretch") {
+            loadSettings(exerciseSelect.value);
+            updateSaveExerciseLabel();
+            updateHistoryUI();
+        }
+    });
+}
 
 if (exerciseGoal) {
     exerciseGoal.addEventListener("change", () => {
@@ -186,17 +222,91 @@ if (exerciseGoal) {
 }
 
 addExerciseBtn.addEventListener("click", () => {
-    const name = prompt("Enter new exercise name:");
+    const setLabel = activeView === "view-stretch" ? "timer exercise" : "hold exercise";
+    const name = prompt(`Enter new ${setLabel} name:`);
     if (name && name.trim() !== "") {
-        exercises.push(name.trim());
-        localStorage.setItem("myExercises", JSON.stringify(exercises));
-        updateDropdown();
-        exerciseSelect.value = name.trim();
-        updateHistoryUI();
-        loadSettings(name.trim());
-        updateSaveExerciseLabel();
+        const trimmed = name.trim();
+        const targetList = activeView === "view-stretch" ? timerExercises : holdExercises;
+        const storageKey = activeView === "view-stretch" ? "timerExercises" : "holdExercises";
+
+        targetList.push(trimmed);
+        localStorage.setItem(storageKey, JSON.stringify(targetList));
+        updateExerciseDropdown();
+        exerciseSelect.value = trimmed;
+
+        if (activeView !== "view-stretch") {
+            loadSettings(trimmed);
+            updateSaveExerciseLabel();
+            updateHistoryUI();
+        }
     }
 });
+
+if (addStretchExerciseBtn) {
+    addStretchExerciseBtn.addEventListener("click", () => {
+        const name = stretchExerciseInput.value.trim();
+        if (!name) {
+            stretchExerciseInput.focus();
+            return;
+        }
+
+        const duration = parseInt(stretchDurationInput.value, 10) || 30;
+        const rest = parseInt(stretchRestInput.value, 10) || 10;
+
+        stretchRoutine.push({ name, duration, rest });
+        localStorage.setItem("stretchRoutine", JSON.stringify(stretchRoutine));
+        renderStretchRoutine();
+
+        stretchExerciseInput.value = "";
+        stretchDurationInput.value = "30";
+        stretchRestInput.value = "10";
+        stretchExerciseInput.focus();
+    });
+}
+
+if (clearStretchRoutineBtn) {
+    clearStretchRoutineBtn.addEventListener("click", () => {
+        stretchRoutine = [];
+        localStorage.setItem("stretchRoutine", JSON.stringify(stretchRoutine));
+        renderStretchRoutine();
+    });
+}
+
+if (stretchRoutineList) {
+    stretchRoutineList.addEventListener("click", (event) => {
+        const button = event.target.closest(".remove-stretch-btn");
+        if (!button) return;
+        const index = Number(button.dataset.index);
+        if (Number.isInteger(index)) {
+            stretchRoutine.splice(index, 1);
+            localStorage.setItem("stretchRoutine", JSON.stringify(stretchRoutine));
+            renderStretchRoutine();
+        }
+    });
+}
+
+function renderStretchRoutine() {
+    if (!stretchRoutineList) return;
+
+    if (stretchRoutine.length === 0) {
+        stretchRoutineList.innerHTML = `<li><span class="text-muted">No stretches added yet.</span></li>`;
+        return;
+    }
+
+    stretchRoutineList.innerHTML = stretchRoutine
+        .map(
+            (item, index) => `
+                <li>
+                    <div>
+                        <strong>${item.name}</strong>
+                        <div class="datetime">${item.duration}s · Rest ${item.rest}s</div>
+                    </div>
+                    <button class="remove-stretch-btn" data-index="${index}" title="Remove">×</button>
+                </li>
+            `,
+        )
+        .join("");
+}
 
 function formatHistoryDate(isoString) {
     const d = new Date(isoString);
@@ -536,7 +646,7 @@ presetBtns.forEach((btn) => {
 });
 
 function updateSaveExerciseLabel() {
-    if (saveExerciseLabel) saveExerciseLabel.textContent = exerciseSelect.value;
+    if (saveExerciseLabel && exerciseSelect) saveExerciseLabel.textContent = exerciseSelect.value;
 }
 
 function flashBtn(btn) {
@@ -686,7 +796,7 @@ startBtn.addEventListener("click", () => {
 
     prepTimeInput.disabled = true;
     voiceStartInput.disabled = true;
-    exerciseSelect.disabled = true;
+    if (exerciseSelect) exerciseSelect.disabled = true;
 
     const p = parseInt(prepTimeInput.value) || 0;
     if (p > 0 && elapsedTime === 0) {
@@ -721,7 +831,7 @@ stopBtn.addEventListener("click", () => {
     status.textContent = "FINISHED";
     status.style.color = "var(--text-main)";
 
-    modalExerciseName.textContent = exerciseSelect.value;
+    if (exerciseSelect) modalExerciseName.textContent = exerciseSelect.value;
     editMinutes.value = Math.floor(elapsedTime / 60000);
     editSeconds.value = Math.floor((elapsedTime % 60000) / 1000);
     saveModal.classList.remove("hidden");
@@ -802,7 +912,7 @@ function resetUI() {
     resetBtn.disabled = false;
     prepTimeInput.disabled = false;
     voiceStartInput.disabled = false;
-    exerciseSelect.disabled = false;
+    if (exerciseSelect) exerciseSelect.disabled = false;
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     // release any locks when resetting
     releaseWakeLock();
@@ -845,4 +955,5 @@ document.addEventListener("visibilitychange", async () => {
     }
 });
 
-updateDropdown();
+updateExerciseDropdown();
+if (typeof renderStretchRoutine === "function") renderStretchRoutine();

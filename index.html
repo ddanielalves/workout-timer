@@ -15,6 +15,7 @@
 
         <header class="app-header">
             <div class="exercise-picker">
+                <span id="exercisePickerLabel" class="picker-label">Hold Exercises</span>
                 <select id="exerciseSelect"></select>
                 <button id="addExerciseBtn" class="icon-btn" title="Add Exercise">+</button>
             </div>
@@ -35,6 +36,32 @@
                 <button id="resetBtn" class="btn secondary-btn">RESET</button>
             </div>
             <button id="openHistoryBtn" class="btn subtle-link-btn">History</button>
+        </main>
+
+        <main id="view-stretch" class="view">
+            <h2 class="view-title">Stretch Timer</h2>
+            <p class="settings-note">Build a stretch sequence with exercise time and rest time for each move.</p>
+            <div class="stretch-form">
+                <input id="stretchExerciseInput" type="text" placeholder="Stretch name" />
+                <div class="stretch-row">
+                    <div class="setting-box">
+                        <label for="stretchDurationInput">Duration (s)</label>
+                        <input type="number" id="stretchDurationInput" min="1" value="30">
+                    </div>
+                    <div class="setting-box">
+                        <label for="stretchRestInput">Rest (s)</label>
+                        <input type="number" id="stretchRestInput" min="0" value="10">
+                    </div>
+                </div>
+                <div class="stretch-actions">
+                    <button id="addStretchExerciseBtn" class="btn primary-btn">Add Stretch</button>
+                    <button id="clearStretchRoutineBtn" class="btn secondary-btn">Clear Routine</button>
+                </div>
+            </div>
+            <div class="history-card">
+                <h3>Stretch Routine</h3>
+                <ul id="stretchRoutineList" class="data-list"></ul>
+            </div>
         </main>
 
         <main id="view-history" class="view">
@@ -107,6 +134,9 @@
         <nav class="bottom-nav">
             <button class="nav-btn active" data-target="view-timer">
                 <span class="nav-icon">⏱️</span> Stopwatch
+            </button>
+            <button class="nav-btn" data-target="view-stretch">
+                <span class="nav-icon">🧘</span> Timer
             </button>
             <button class="nav-btn" data-target="view-settings">
                 <span class="nav-icon">⚙️</span> Settings

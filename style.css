@@ -37,7 +37,10 @@ body {
 
 /* Header & Inputs */
 .app-header { padding: 20px; background: var(--bg-dark); z-index: 10; border-bottom: 1px solid var(--border); }
-.exercise-picker { display: flex; gap: 10px; }
+.exercise-picker { display: flex; gap: 10px; align-items: center; }
+.picker-label { color: var(--text-muted); font-size: 0.9rem; min-width: 110px; }
+.stopwatch-picker { display: flex; flex-direction: column; gap: 10px; }
+.stopwatch-picker label { color: var(--text-muted); font-size: 0.85rem; }
 select { flex: 1; background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 1.1rem; font-weight: 600; outline: none; }
 .icon-btn { background: var(--card-bg); color: var(--accent-blue); border: 1px solid var(--border); border-radius: 10px; width: 48px; font-size: 1.5rem; font-weight: bold; cursor: pointer; }
 
@@ -194,6 +197,42 @@ select { flex: 1; background: var(--card-bg); color: var(--text-main); border: 1
 .setting-section-title { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
 .settings-note { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
 .save-settings-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.stretch-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 15px;
+}
+
+.stretch-form input[type="text"] {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--text-main);
+    padding: 14px 16px;
+    font-size: 1rem;
+    outline: none;
+}
+
+.stretch-row { display: flex; gap: 15px; }
+
+.stretch-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.remove-stretch-btn {
+    background: none;
+    border: none;
+    color: var(--accent-red);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0;
+}
+
+.remove-stretch-btn:hover { opacity: 0.85; }
 
 /* Chart */
 .chart-container { background: var(--card-bg); padding: 15px; border-radius: 12px; }
