@@ -23,6 +23,7 @@ const clearStretchRoutineBtn = document.getElementById("clearStretchRoutineBtn")
 const runStretchRoutineBtn = document.getElementById("runStretchRoutineBtn");
 const stretchRoutineList = document.getElementById("stretchRoutineList");
 const stretchSetsInput = document.getElementById("stretchSetsInput");
+const stretchTotalTimeEl = document.getElementById("stretchTotalTime");
 const stretchForm = document.querySelector(".stretch-form");
 const stretchRunCard = document.getElementById("stretchRunCard");
 const stretchRunStatus = document.getElementById("stretchRunStatus");
@@ -321,11 +322,20 @@ if (addStretchExerciseBtn) {
 
         stretchDurationInput.value = "30";
         stretchRestInput.value = "10";
+        updateStretchTotalTimeDisplay();
     });
 }
 
 if (runStretchRoutineBtn) {
     runStretchRoutineBtn.addEventListener("click", startStretchRun);
+}
+
+if (stretchSetsInput) {
+    stretchSetsInput.addEventListener("change", () => {
+        // clamp to min 1
+        stretchSetsInput.value = Math.max(1, parseInt(stretchSetsInput.value, 10) || 1);
+        updateStretchTotalTimeDisplay();
+    });
 }
 
 if (pauseStretchBtn) {
@@ -597,6 +607,43 @@ function renderStretchRoutine() {
             `;
         })
         .join("");
+    updateStretchTotalTimeDisplay();
+}
+
+function computeStretchTotalSeconds(sets) {
+    if (!stretchRoutine || stretchRoutine.length === 0) return 0;
+    const n = stretchRoutine.length;
+    // per-set durations sum
+    const perSetDur = stretchRoutine.reduce((s, item) => s + (parseInt(item.duration, 10) || 0), 0);
+    // per-set rests: include rest for all exercises except the last one in the set
+    const perSetRests = stretchRoutine.slice(0, Math.max(0, n - 1)).reduce((s, item) => s + (parseInt(item.rest, 10) || 0), 0);
+
+    const totalSeconds = sets * (perSetDur + perSetRests);
+    return totalSeconds;
+}
+
+function formatSecondsToHuman(totalSeconds) {
+    totalSeconds = Math.max(0, Math.floor(totalSeconds));
+    if (totalSeconds >= 3600) {
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, "0");
+        const s = (totalSeconds % 60).toString().padStart(2, "0");
+        return `${h}:${m}:${s}`;
+    }
+    const m = Math.floor(totalSeconds / 60);
+    const s = (totalSeconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+}
+
+function updateStretchTotalTimeDisplay() {
+    if (!stretchTotalTimeEl) return;
+    const sets = stretchSetsInput ? Math.max(1, parseInt(stretchSetsInput.value, 10) || 1) : 1;
+    const totalSec = computeStretchTotalSeconds(sets);
+    if (totalSec === 0) {
+        stretchTotalTimeEl.textContent = "";
+    } else {
+        stretchTotalTimeEl.textContent = ` — Total ${formatSecondsToHuman(totalSec)}`;
+    }
 }
 
 function updateStretchRoutineHighlights() {
