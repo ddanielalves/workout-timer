@@ -491,6 +491,9 @@ function startStretchRun() {
         ? Math.max(1, parseInt(stretchSetsInput.value, 10) || 1)
         : 1;
     stretchRunCurrentSet = 1;
+    stretchRunSetRest = stretchSetRestInput
+        ? Math.max(0, parseInt(stretchSetRestInput.value, 10) || 0)
+        : 0;
     setStretchRunRemaining(5000);
     stretchRunEndTime = Date.now() + 5000;
 
@@ -518,12 +521,18 @@ function advanceStretchRun() {
             stretchRunPhase = "rest";
             playSound("start");
         } else if (isLastExerciseInRoutine) {
-            // End of circuit: if more sets remain, start next set at index 0; otherwise finish
+            // End of circuit: if more sets remain, handle set rest; otherwise finish
             if (stretchRunCurrentSet < stretchRunTotalSets) {
-                stretchRunCurrentSet += 1;
-                stretchRunIndex = 0;
-                stretchRunPhase = "exercise";
-                playSound("start");
+                // Check if set rest is configured
+                if (stretchRunSetRest > 0) {
+                    stretchRunPhase = "set-rest";
+                    playSound("start");
+                } else {
+                    stretchRunCurrentSet += 1;
+                    stretchRunIndex = 0;
+                    stretchRunPhase = "exercise";
+                    playSound("start");
+                }
             } else {
                 // final exercise of final set -> complete
                 completeStretchRun();
@@ -552,6 +561,12 @@ function advanceStretchRun() {
             stretchRunPhase = "exercise";
             playSound("start");
         }
+    } else if (stretchRunPhase === "set-rest") {
+        // After set rest, move to next set's first exercise
+        stretchRunCurrentSet += 1;
+        stretchRunIndex = 0;
+        stretchRunPhase = "exercise";
+        playSound("start");
     }
 
     const current = stretchRoutine[stretchRunIndex];
@@ -563,7 +578,9 @@ function advanceStretchRun() {
     const nextDuration =
         stretchRunPhase === "exercise"
             ? current.duration * 1000
-            : current.rest * 1000;
+            : stretchRunPhase === "set-rest"
+              ? stretchRunSetRest * 1000
+              : current.rest * 1000;
     setStretchRunRemaining(nextDuration);
     stretchRunEndTime = Date.now() + nextDuration;
 
@@ -687,7 +704,13 @@ function computeStretchTotalSeconds(sets) {
         .slice(0, Math.max(0, n - 1))
         .reduce((s, item) => s + (parseInt(item.rest, 10) || 0), 0);
 
-    const totalSeconds = sets * (perSetDur + perSetRests);
+    // set rest between sets (only applies between sets, not after the last one)
+    const setRest = stretchSetRestInput
+        ? Math.max(0, parseInt(stretchSetRestInput.value, 10) || 0)
+        : 0;
+    const setRestBetween = Math.max(0, sets - 1) * setRest;
+
+    const totalSeconds = sets * (perSetDur + perSetRests) + setRestBetween;
     return totalSeconds;
 }
 
