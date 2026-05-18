@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Static Hold Tracker</title>
+    <title>Hold Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -22,8 +22,11 @@
             </div>
         </header>
 
+        <!-- ── TIMER VIEW ── -->
         <main id="view-timer" class="view active-view">
             <button id="enableSoundBtn" class="icon-btn floating-sound-btn" title="Enable Sound">SOUND</button>
+            <button id="openHistoryBtn" class="btn subtle-link-btn">History</button>
+
             <div class="timer-card">
                 <div id="status">READY</div>
                 <div id="display">00:00.00</div>
@@ -36,19 +39,21 @@
                 <button id="stopBtn" class="btn danger-btn" disabled>STOP</button>
                 <button id="resetBtn" class="btn secondary-btn">RESET</button>
             </div>
-            <button id="openHistoryBtn" class="btn subtle-link-btn">History</button>
         </main>
 
+        <!-- ── STRETCH VIEW ── -->
         <main id="view-stretch" class="view">
             <h2 class="view-title">Stretch Timer</h2>
+
             <div class="stretch-form">
                 <div id="timerExerciseSelectWrapper" class="stretch-exercise-picker">
-                    <label for="timerExerciseSelect">Choose timer exercise</label>
+                    <label for="timerExerciseSelect">Exercise</label>
                     <div class="timer-picker-row">
                         <select id="timerExerciseSelect"></select>
                         <button id="addTimerExerciseBtn" class="icon-btn" title="Add Timer Exercise">+</button>
                     </div>
                 </div>
+
                 <div class="stretch-row">
                     <div class="setting-box">
                         <label for="stretchDurationInput">Duration (s)</label>
@@ -59,16 +64,29 @@
                         <input type="number" id="stretchRestInput" min="0" value="10">
                     </div>
                     <div class="setting-box">
-                        <label for="stretchSetsInput">Sets</label>
-                        <input type="number" id="stretchSetsInput" min="1" value="1" class="sets-input">
+                        <label for="stretchSetRestInput">Set Rest (s)</label>
+                        <input type="number" id="stretchSetRestInput" min="0" value="0">
+                    </div>
+                    <div class="setting-box compact-row">
+                        <div class="checkbox-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="stretchSingleSideInput">
+                                <span>Single-side</span>
+                            </label>
+                        </div>
+                        <div class="sets-item">
+                            <label for="stretchSetsInput">Sets</label>
+                            <input type="number" id="stretchSetsInput" min="1" value="1" class="sets-input">
+                        </div>
                     </div>
                 </div>
+
                 <div class="stretch-actions">
                     <button id="addStretchExerciseBtn" class="btn secondary-btn">Add Stretch</button>
-                    <button id="runStretchRoutineBtn" class="btn primary-btn" title="Play Stretch Routine">▶
-                        Play</button>
+                    <button id="runStretchRoutineBtn" class="btn primary-btn">▶ Play</button>
                 </div>
             </div>
+
             <div id="stretchRunCard" class="stretch-run-card hidden">
                 <div class="timer-card">
                     <div id="stretchRunStatus">GET READY</div>
@@ -81,36 +99,40 @@
                     <button id="stopStretchBtn" class="btn danger-btn">Stop</button>
                 </div>
             </div>
+
             <div class="history-card">
-                <h3>Stretch Routine <span id="stretchTotalTime" class="text-muted"></span></h3>
+                <h3>Routine <span id="stretchTotalTime" class="text-muted"></span></h3>
                 <ul id="stretchRoutineList" class="data-list stretch-routine-list"></ul>
             </div>
         </main>
 
+        <!-- ── HISTORY VIEW ── -->
         <main id="view-history" class="view">
             <h2 class="view-title">Performance</h2>
+
             <div class="history-grid">
                 <div class="history-card">
                     <h3>Recent</h3>
                     <ul id="recentList" class="data-list"></ul>
                 </div>
                 <div class="history-card">
-                    <h3>Top 3 Bests</h3>
+                    <h3>Top 3</h3>
                     <ul id="bestList" class="data-list"></ul>
                 </div>
             </div>
 
             <div class="chart-container">
-                <h3>Performance Over Time</h3>
+                <h3>Over Time</h3>
                 <canvas id="performanceChart"></canvas>
             </div>
 
             <details class="all-history-accordion">
-                <summary>View All History</summary>
+                <summary>All History</summary>
                 <ul id="allHistoryList" class="data-list full-list"></ul>
             </details>
         </main>
 
+        <!-- ── SETTINGS VIEW ── -->
         <main id="view-settings" class="view">
             <h2 class="view-title">Settings</h2>
 
@@ -143,17 +165,17 @@
             </div>
 
             <div class="setting-section">
-                <p class="setting-section-title">Save Settings</p>
-                <p class="settings-note">Save as default for all exercises, or override for the selected exercise only.
-                </p>
+                <p class="setting-section-title">Save</p>
+                <p class="settings-note">Save as default for all, or override for the selected exercise only.</p>
                 <div class="save-settings-actions">
-                    <button id="saveDefaultBtn" class="btn secondary-btn">Save as Default</button>
+                    <button id="saveDefaultBtn" class="btn secondary-btn">Save Default</button>
                     <button id="saveExerciseBtn" class="btn primary-btn">Save for "<span
                             id="saveExerciseLabel"></span>"</button>
                 </div>
             </div>
         </main>
 
+        <!-- ── BOTTOM NAV ── -->
         <nav class="bottom-nav">
             <button class="nav-btn active" data-target="view-timer">
                 <span class="nav-icon">⏱️</span> Stopwatch
@@ -166,6 +188,7 @@
             </button>
         </nav>
 
+        <!-- ── SETTING EDIT MODAL ── -->
         <div id="settingEditModal" class="modal-overlay hidden">
             <div class="modal-content">
                 <h3 id="settingEditTitle">Edit Setting</h3>
@@ -185,17 +208,16 @@
             </div>
         </div>
 
+        <!-- ── SAVE MODAL ── -->
         <div id="saveModal" class="modal-overlay hidden">
             <div class="modal-content">
                 <h3>Save Set</h3>
                 <p id="modalExerciseName" class="highlight-text"></p>
-                <p class="sub-text">Adjust time if you paused late:</p>
-
+                <p class="sub-text">Adjust time if needed:</p>
                 <div class="edit-timer">
                     <input type="number" id="editMinutes" min="0"><span>m</span>
                     <input type="number" id="editSeconds" min="0" max="59"><span>s</span>
                 </div>
-
                 <div class="modal-actions">
                     <button id="cancelSaveBtn" class="btn secondary-btn">Discard</button>
                     <button id="confirmSaveBtn" class="btn primary-btn">Save</button>
@@ -204,6 +226,7 @@
         </div>
 
     </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
     <script src="script.js"></script>
 </body>

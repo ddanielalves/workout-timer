@@ -14,12 +14,19 @@ const exercisePickerContent = document.getElementById("exercisePickerContent");
 const exerciseSelect = document.getElementById("exerciseSelect");
 const addExerciseBtn = document.getElementById("addExerciseBtn");
 const timerExerciseSelect = document.getElementById("timerExerciseSelect");
-const timerExerciseSelectWrapper = document.getElementById("timerExerciseSelectWrapper");
+const timerExerciseSelectWrapper = document.getElementById(
+    "timerExerciseSelectWrapper",
+);
 const addTimerExerciseBtn = document.getElementById("addTimerExerciseBtn");
 const stretchDurationInput = document.getElementById("stretchDurationInput");
 const stretchRestInput = document.getElementById("stretchRestInput");
+const stretchSingleSideInput = document.getElementById(
+    "stretchSingleSideInput",
+);
 const addStretchExerciseBtn = document.getElementById("addStretchExerciseBtn");
-const clearStretchRoutineBtn = document.getElementById("clearStretchRoutineBtn");
+const clearStretchRoutineBtn = document.getElementById(
+    "clearStretchRoutineBtn",
+);
 const runStretchRoutineBtn = document.getElementById("runStretchRoutineBtn");
 const stretchRoutineList = document.getElementById("stretchRoutineList");
 const stretchSetsInput = document.getElementById("stretchSetsInput");
@@ -41,6 +48,7 @@ let stretchRunRemainingMs = 0;
 let isStretchPaused = false;
 let stretchRunTotalSets = 1;
 let stretchRunCurrentSet = 1;
+let stretchRunSetRest = 0;
 
 // Setting Edit Modal Elements
 const settingEditModal = document.getElementById("settingEditModal");
@@ -49,7 +57,9 @@ const settingEditInput = document.getElementById("settingEditInput");
 const confirmSettingEditBtn = document.getElementById("confirmSettingEditBtn");
 const cancelSettingEditBtn = document.getElementById("cancelSettingEditBtn");
 const restPresets = document.getElementById("restPresets");
-const presetBtns = restPresets ? restPresets.querySelectorAll(".preset-btn") : [];
+const presetBtns = restPresets
+    ? restPresets.querySelectorAll(".preset-btn")
+    : [];
 
 // Modal Elements
 const saveModal = document.getElementById("saveModal");
@@ -180,7 +190,9 @@ function showView(target) {
     const view = document.getElementById(target);
     if (view) view.classList.add("active-view");
 
-    navBtns.forEach((b) => b.classList.toggle("active", b.dataset.target === target));
+    navBtns.forEach((b) =>
+        b.classList.toggle("active", b.dataset.target === target),
+    );
     updateExerciseDropdown();
     if (target === "view-history") updateHistoryUI();
     if (target === "view-stretch") renderStretchRoutine();
@@ -206,28 +218,35 @@ let holdExercises = JSON.parse(localStorage.getItem("holdExercises")) || [
 let stretchRoutine = JSON.parse(localStorage.getItem("stretchRoutine")) || [];
 
 function updateExerciseDropdown() {
-    if (!exerciseSelect || !timerExerciseSelect || !timerExerciseSelectWrapper) return;
+    if (!exerciseSelect || !timerExerciseSelect || !timerExerciseSelectWrapper)
+        return;
 
     const headerPicker = exercisePickerContent;
     if (activeView === "view-stretch") {
         if (headerPicker) headerPicker.style.display = "none";
         if (addExerciseBtn) addExerciseBtn.style.display = "none";
-        if (timerExerciseSelectWrapper) timerExerciseSelectWrapper.style.display = "flex";
-        if (addTimerExerciseBtn) addTimerExerciseBtn.style.display = "inline-flex";
+        if (timerExerciseSelectWrapper)
+            timerExerciseSelectWrapper.style.display = "flex";
+        if (addTimerExerciseBtn)
+            addTimerExerciseBtn.style.display = "inline-flex";
 
         if (timerExerciseSelect) {
             timerExerciseSelect.innerHTML = timerExercises
                 .map((ex) => `<option value="${ex}">${ex}</option>`)
                 .join("");
 
-            if (timerExercises.length > 0 && !timerExercises.includes(timerExerciseSelect.value)) {
+            if (
+                timerExercises.length > 0 &&
+                !timerExercises.includes(timerExerciseSelect.value)
+            ) {
                 timerExerciseSelect.selectedIndex = 0;
             }
         }
     } else {
         if (headerPicker) headerPicker.style.display = "flex";
         if (addExerciseBtn) addExerciseBtn.style.display = "inline-flex";
-        if (timerExerciseSelectWrapper) timerExerciseSelectWrapper.style.display = "none";
+        if (timerExerciseSelectWrapper)
+            timerExerciseSelectWrapper.style.display = "none";
         if (addTimerExerciseBtn) addTimerExerciseBtn.style.display = "none";
 
         if (exerciseSelect) {
@@ -235,7 +254,10 @@ function updateExerciseDropdown() {
                 .map((ex) => `<option value="${ex}">${ex}</option>`)
                 .join("");
 
-            if (holdExercises.length > 0 && !holdExercises.includes(exerciseSelect.value)) {
+            if (
+                holdExercises.length > 0 &&
+                !holdExercises.includes(exerciseSelect.value)
+            ) {
                 exerciseSelect.selectedIndex = 0;
             }
 
@@ -272,7 +294,10 @@ if (addTimerExerciseBtn) {
         if (name && name.trim() !== "") {
             const trimmed = name.trim();
             timerExercises.push(trimmed);
-            localStorage.setItem("timerExercises", JSON.stringify(timerExercises));
+            localStorage.setItem(
+                "timerExercises",
+                JSON.stringify(timerExercises),
+            );
             updateExerciseDropdown();
             if (timerExerciseSelect) timerExerciseSelect.value = trimmed;
         }
@@ -286,12 +311,15 @@ if (exerciseGoal) {
 }
 
 addExerciseBtn.addEventListener("click", () => {
-    const setLabel = activeView === "view-stretch" ? "timer exercise" : "hold exercise";
+    const setLabel =
+        activeView === "view-stretch" ? "timer exercise" : "hold exercise";
     const name = prompt(`Enter new ${setLabel} name:`);
     if (name && name.trim() !== "") {
         const trimmed = name.trim();
-        const targetList = activeView === "view-stretch" ? timerExercises : holdExercises;
-        const storageKey = activeView === "view-stretch" ? "timerExercises" : "holdExercises";
+        const targetList =
+            activeView === "view-stretch" ? timerExercises : holdExercises;
+        const storageKey =
+            activeView === "view-stretch" ? "timerExercises" : "holdExercises";
 
         targetList.push(trimmed);
         localStorage.setItem(storageKey, JSON.stringify(targetList));
@@ -315,13 +343,21 @@ if (addStretchExerciseBtn) {
         const name = timerExerciseSelect.value;
         const duration = parseInt(stretchDurationInput.value, 10) || 30;
         const rest = parseInt(stretchRestInput.value, 10) || 10;
+        const isSingleSide = stretchSingleSideInput?.checked;
 
-        stretchRoutine.push({ name, duration, rest });
+        if (isSingleSide) {
+            stretchRoutine.push({ name: `${name} (Left)`, duration, rest: 0 });
+            stretchRoutine.push({ name: `${name} (Right)`, duration, rest });
+        } else {
+            stretchRoutine.push({ name, duration, rest });
+        }
+
         localStorage.setItem("stretchRoutine", JSON.stringify(stretchRoutine));
         renderStretchRoutine();
 
         stretchDurationInput.value = "30";
         stretchRestInput.value = "10";
+        if (stretchSingleSideInput) stretchSingleSideInput.checked = false;
         updateStretchTotalTimeDisplay();
     });
 }
@@ -333,7 +369,10 @@ if (runStretchRoutineBtn) {
 if (stretchSetsInput) {
     stretchSetsInput.addEventListener("change", () => {
         // clamp to min 1
-        stretchSetsInput.value = Math.max(1, parseInt(stretchSetsInput.value, 10) || 1);
+        stretchSetsInput.value = Math.max(
+            1,
+            parseInt(stretchSetsInput.value, 10) || 1,
+        );
         updateStretchTotalTimeDisplay();
     });
 }
@@ -360,10 +399,12 @@ function showStretchRunCard(show) {
 function updateStretchRunControls() {
     if (pauseStretchBtn) {
         pauseStretchBtn.textContent = isStretchPaused ? "Resume" : "Pause";
-        pauseStretchBtn.disabled = !stretchRunPhase || stretchRunPhase === "complete";
+        pauseStretchBtn.disabled =
+            !stretchRunPhase || stretchRunPhase === "complete";
     }
     if (stopStretchBtn) {
-        stopStretchBtn.disabled = !stretchRunPhase || stretchRunPhase === "complete";
+        stopStretchBtn.disabled =
+            !stretchRunPhase || stretchRunPhase === "complete";
     }
 }
 
@@ -375,7 +416,8 @@ function updateStretchRunDisplay() {
 
     // Show set info if available
     const setEl = document.getElementById("stretchRunSet");
-    if (setEl) setEl.textContent = `Set ${stretchRunCurrentSet}/${stretchRunTotalSets}`;
+    if (setEl)
+        setEl.textContent = `Set ${stretchRunCurrentSet}/${stretchRunTotalSets}`;
 
     if (stretchRunPhase === "prep") {
         stretchRunStatus.textContent = "GET READY";
@@ -396,6 +438,10 @@ function updateStretchRunDisplay() {
         stretchRunCurrent.textContent = stretchRoutine[nextIndex]
             ? `Next: ${stretchRoutine[nextIndex].name}`
             : "Routine Complete Soon";
+    } else if (stretchRunPhase === "set-rest") {
+        stretchRunStatus.textContent = "SET REST";
+        stretchRunStatus.style.color = "var(--accent-red)";
+        stretchRunCurrent.textContent = "Between sets";
     } else if (stretchRunPhase === "complete") {
         stretchRunStatus.textContent = "COMPLETE";
         stretchRunStatus.style.color = "var(--accent-blue)";
@@ -414,7 +460,8 @@ function scheduleStretchRunTick() {
 }
 
 function stretchRunTick() {
-    if (isStretchPaused || !stretchRunPhase || stretchRunPhase === "complete") return;
+    if (isStretchPaused || !stretchRunPhase || stretchRunPhase === "complete")
+        return;
 
     const remaining = stretchRunEndTime - Date.now();
     if (remaining <= 0) {
@@ -440,7 +487,9 @@ function startStretchRun() {
     stretchRunIndex = 0;
     stretchRunPhase = "prep";
     isStretchPaused = false;
-    stretchRunTotalSets = stretchSetsInput ? Math.max(1, parseInt(stretchSetsInput.value, 10) || 1) : 1;
+    stretchRunTotalSets = stretchSetsInput
+        ? Math.max(1, parseInt(stretchSetsInput.value, 10) || 1)
+        : 1;
     stretchRunCurrentSet = 1;
     setStretchRunRemaining(5000);
     stretchRunEndTime = Date.now() + 5000;
@@ -458,8 +507,11 @@ function advanceStretchRun() {
         playSound("start");
     } else if (stretchRunPhase === "exercise") {
         const current = stretchRoutine[stretchRunIndex];
-        const isLastExerciseInRoutine = stretchRunIndex === stretchRoutine.length - 1;
-        const isFinalOverall = isLastExerciseInRoutine && stretchRunCurrentSet === stretchRunTotalSets;
+        const isLastExerciseInRoutine =
+            stretchRunIndex === stretchRoutine.length - 1;
+        const isFinalOverall =
+            isLastExerciseInRoutine &&
+            stretchRunCurrentSet === stretchRunTotalSets;
 
         // If not the last exercise in the routine and rest exists, go to rest
         if (current && current.rest > 0 && !isLastExerciseInRoutine) {
@@ -508,7 +560,10 @@ function advanceStretchRun() {
         return;
     }
 
-    const nextDuration = stretchRunPhase === "exercise" ? current.duration * 1000 : current.rest * 1000;
+    const nextDuration =
+        stretchRunPhase === "exercise"
+            ? current.duration * 1000
+            : current.rest * 1000;
     setStretchRunRemaining(nextDuration);
     stretchRunEndTime = Date.now() + nextDuration;
 
@@ -577,7 +632,10 @@ if (stretchRoutineList) {
         const index = Number(button.dataset.index);
         if (Number.isInteger(index)) {
             stretchRoutine.splice(index, 1);
-            localStorage.setItem("stretchRoutine", JSON.stringify(stretchRoutine));
+            localStorage.setItem(
+                "stretchRoutine",
+                JSON.stringify(stretchRoutine),
+            );
             renderStretchRoutine();
         }
     });
@@ -593,14 +651,20 @@ function renderStretchRoutine() {
 
     stretchRoutineList.innerHTML = stretchRoutine
         .map((item, index) => {
-            const isActive = stretchRunPhase && index === stretchRunIndex && stretchRunPhase !== "prep";
-            const phaseClass = isActive && stretchRunPhase === "rest" ? "resting" : "active";
+            const isActive =
+                stretchRunPhase &&
+                index === stretchRunIndex &&
+                stretchRunPhase !== "prep";
+            const phaseClass =
+                isActive && stretchRunPhase === "rest" ? "resting" : "active";
             const itemClass = isActive ? phaseClass : "";
+            const restText =
+                item.rest > 0 ? ` · Rest ${item.rest}s` : " · No rest";
             return `
                 <li class="${itemClass}">
                     <div>
                         <strong>${item.name}</strong>
-                        <div class="datetime">${item.duration}s · Rest ${item.rest}s</div>
+                        <div class="datetime">${item.duration}s${restText}</div>
                     </div>
                     <button class="remove-stretch-btn" data-index="${index}" title="Remove">×</button>
                 </li>
@@ -614,9 +678,14 @@ function computeStretchTotalSeconds(sets) {
     if (!stretchRoutine || stretchRoutine.length === 0) return 0;
     const n = stretchRoutine.length;
     // per-set durations sum
-    const perSetDur = stretchRoutine.reduce((s, item) => s + (parseInt(item.duration, 10) || 0), 0);
+    const perSetDur = stretchRoutine.reduce(
+        (s, item) => s + (parseInt(item.duration, 10) || 0),
+        0,
+    );
     // per-set rests: include rest for all exercises except the last one in the set
-    const perSetRests = stretchRoutine.slice(0, Math.max(0, n - 1)).reduce((s, item) => s + (parseInt(item.rest, 10) || 0), 0);
+    const perSetRests = stretchRoutine
+        .slice(0, Math.max(0, n - 1))
+        .reduce((s, item) => s + (parseInt(item.rest, 10) || 0), 0);
 
     const totalSeconds = sets * (perSetDur + perSetRests);
     return totalSeconds;
@@ -626,7 +695,9 @@ function formatSecondsToHuman(totalSeconds) {
     totalSeconds = Math.max(0, Math.floor(totalSeconds));
     if (totalSeconds >= 3600) {
         const h = Math.floor(totalSeconds / 3600);
-        const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, "0");
+        const m = Math.floor((totalSeconds % 3600) / 60)
+            .toString()
+            .padStart(2, "0");
         const s = (totalSeconds % 60).toString().padStart(2, "0");
         return `${h}:${m}:${s}`;
     }
@@ -637,7 +708,9 @@ function formatSecondsToHuman(totalSeconds) {
 
 function updateStretchTotalTimeDisplay() {
     if (!stretchTotalTimeEl) return;
-    const sets = stretchSetsInput ? Math.max(1, parseInt(stretchSetsInput.value, 10) || 1) : 1;
+    const sets = stretchSetsInput
+        ? Math.max(1, parseInt(stretchSetsInput.value, 10) || 1)
+        : 1;
     const totalSec = computeStretchTotalSeconds(sets);
     if (totalSec === 0) {
         stretchTotalTimeEl.textContent = "";
@@ -710,7 +783,12 @@ function generateDummyData(exerciseName) {
     return template.map((item) => {
         const date = new Date(now);
         date.setDate(date.getDate() - item.daysAgo);
-        date.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60), 0, 0);
+        date.setHours(
+            Math.floor(Math.random() * 24),
+            Math.floor(Math.random() * 60),
+            0,
+            0,
+        );
         return {
             exercise: exerciseName,
             durationSeconds: item.duration,
@@ -754,7 +832,9 @@ function renderPerformanceChart(logs, exerciseName) {
     if (!performanceChartCanvas) return;
 
     // Sort logs by timestamp (oldest first)
-    let sorted = [...logs].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    let sorted = [...logs].sort(
+        (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
+    );
 
     if (sorted.length === 0) {
         // Destroy existing chart if no data
@@ -769,20 +849,32 @@ function renderPerformanceChart(logs, exerciseName) {
     const dailyBest = {};
     sorted.forEach((log) => {
         const d = new Date(log.timestamp);
-        const dateKey = d.toLocaleDateString(undefined, { year: "numeric", month: "2-digit", day: "2-digit" });
+        const dateKey = d.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+        });
 
-        if (!dailyBest[dateKey] || log.durationSeconds > dailyBest[dateKey].durationSeconds) {
+        if (
+            !dailyBest[dateKey] ||
+            log.durationSeconds > dailyBest[dateKey].durationSeconds
+        ) {
             dailyBest[dateKey] = log;
         }
     });
 
     // Convert back to sorted array
-    sorted = Object.values(dailyBest).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    sorted = Object.values(dailyBest).sort(
+        (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
+    );
 
     // Prepare data
     const labels = sorted.map((log) => {
         const d = new Date(log.timestamp);
-        return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+        return d.toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+        });
     });
 
     const data = sorted.map((log) => log.durationSeconds);
@@ -870,9 +962,17 @@ function renderPerformanceChart(logs, exerciseName) {
                 y: {
                     beginAtZero: true,
                     max: yAxisMax,
-                    ticks: { color: "#b0b0b5", font: { size: 11, weight: "500" } },
+                    ticks: {
+                        color: "#b0b0b5",
+                        font: { size: 11, weight: "500" },
+                    },
                     grid: { color: "#2c2c2e", drawBorder: false },
-                    title: { display: true, text: "Duration (seconds)", color: "#ffffff", font: { size: 12, weight: "600" } },
+                    title: {
+                        display: true,
+                        text: "Duration (seconds)",
+                        color: "#ffffff",
+                        font: { size: 12, weight: "600" },
+                    },
                 },
                 x: {
                     ticks: {
@@ -928,7 +1028,9 @@ function getGoal(exerciseName) {
 function updateSettingsPill() {
     const prep = parseInt(prepTimeInput.value) || 0;
     const voice = parseInt(voiceStartInput.value) || 0;
-    const rest = isNaN(parseInt(restTimeInput.value)) ? 0 : parseInt(restTimeInput.value);
+    const rest = isNaN(parseInt(restTimeInput.value))
+        ? 0
+        : parseInt(restTimeInput.value);
     settingsPill.innerHTML =
         `<span class="pill-item" data-field="prep">Prep <strong>${prep}s</strong></span>` +
         `<span class="pill-item" data-field="voice">Voice @ <strong>${voice}s</strong></span>` +
@@ -944,19 +1046,28 @@ settingsPill.addEventListener("click", (e) => {
     _currentEditField = pill.dataset.field;
     if (_currentEditField === "prep") {
         settingEditTitle.textContent = "Prep Time";
-        settingEditInput.value = isNaN(parseInt(prepTimeInput.value)) ? 0 : parseInt(prepTimeInput.value);
+        settingEditInput.value = isNaN(parseInt(prepTimeInput.value))
+            ? 0
+            : parseInt(prepTimeInput.value);
         restPresets.style.display = "none";
     } else if (_currentEditField === "voice") {
         settingEditTitle.textContent = "Voice Start";
-        settingEditInput.value = isNaN(parseInt(voiceStartInput.value)) ? 0 : parseInt(voiceStartInput.value);
+        settingEditInput.value = isNaN(parseInt(voiceStartInput.value))
+            ? 0
+            : parseInt(voiceStartInput.value);
         restPresets.style.display = "none";
     } else {
         settingEditTitle.textContent = "Rest Time";
-        settingEditInput.value = isNaN(parseInt(restTimeInput.value)) ? 0 : parseInt(restTimeInput.value);
+        settingEditInput.value = isNaN(parseInt(restTimeInput.value))
+            ? 0
+            : parseInt(restTimeInput.value);
         restPresets.style.display = "flex";
     }
     settingEditModal.classList.remove("hidden");
-    setTimeout(() => { settingEditInput.focus(); settingEditInput.select(); }, 10);
+    setTimeout(() => {
+        settingEditInput.focus();
+        settingEditInput.select();
+    }, 10);
 });
 
 cancelSettingEditBtn.addEventListener("click", () => {
@@ -973,9 +1084,15 @@ function applySettingEdit() {
         restTimeInput.value = val;
     }
     const payload = JSON.stringify({
-        prepTime: isNaN(parseInt(prepTimeInput.value)) ? 5 : parseInt(prepTimeInput.value),
-        voiceStart: isNaN(parseInt(voiceStartInput.value)) ? 30 : parseInt(voiceStartInput.value),
-        restTime: isNaN(parseInt(restTimeInput.value)) ? 0 : parseInt(restTimeInput.value),
+        prepTime: isNaN(parseInt(prepTimeInput.value))
+            ? 5
+            : parseInt(prepTimeInput.value),
+        voiceStart: isNaN(parseInt(voiceStartInput.value))
+            ? 30
+            : parseInt(voiceStartInput.value),
+        restTime: isNaN(parseInt(restTimeInput.value))
+            ? 0
+            : parseInt(restTimeInput.value),
     });
     localStorage.setItem(`settings_ex_${exerciseSelect.value}`, payload);
     localStorage.setItem("settings_default", payload);
@@ -998,7 +1115,8 @@ presetBtns.forEach((btn) => {
 });
 
 function updateSaveExerciseLabel() {
-    if (saveExerciseLabel && exerciseSelect) saveExerciseLabel.textContent = exerciseSelect.value;
+    if (saveExerciseLabel && exerciseSelect)
+        saveExerciseLabel.textContent = exerciseSelect.value;
 }
 
 function flashBtn(btn) {
@@ -1015,9 +1133,15 @@ saveDefaultBtn.addEventListener("click", () => {
     localStorage.setItem(
         "settings_default",
         JSON.stringify({
-            prepTime: isNaN(parseInt(prepTimeInput.value)) ? 5 : parseInt(prepTimeInput.value),
-            voiceStart: isNaN(parseInt(voiceStartInput.value)) ? 30 : parseInt(voiceStartInput.value),
-            restTime: isNaN(parseInt(restTimeInput.value)) ? 0 : parseInt(restTimeInput.value),
+            prepTime: isNaN(parseInt(prepTimeInput.value))
+                ? 5
+                : parseInt(prepTimeInput.value),
+            voiceStart: isNaN(parseInt(voiceStartInput.value))
+                ? 30
+                : parseInt(voiceStartInput.value),
+            restTime: isNaN(parseInt(restTimeInput.value))
+                ? 0
+                : parseInt(restTimeInput.value),
         }),
     );
     updateSettingsPill();
@@ -1028,9 +1152,15 @@ saveExerciseBtn.addEventListener("click", () => {
     localStorage.setItem(
         `settings_ex_${exerciseSelect.value}`,
         JSON.stringify({
-            prepTime: isNaN(parseInt(prepTimeInput.value)) ? 5 : parseInt(prepTimeInput.value),
-            voiceStart: isNaN(parseInt(voiceStartInput.value)) ? 30 : parseInt(voiceStartInput.value),
-            restTime: isNaN(parseInt(restTimeInput.value)) ? 0 : parseInt(restTimeInput.value),
+            prepTime: isNaN(parseInt(prepTimeInput.value))
+                ? 5
+                : parseInt(prepTimeInput.value),
+            voiceStart: isNaN(parseInt(voiceStartInput.value))
+                ? 30
+                : parseInt(voiceStartInput.value),
+            restTime: isNaN(parseInt(restTimeInput.value))
+                ? 0
+                : parseInt(restTimeInput.value),
         }),
     );
 
@@ -1048,7 +1178,13 @@ function playSound(type) {
     const now = audioCtx.currentTime;
 
     // Helper to play a single tone with an ADSR-like envelope
-    function playTone(freq, type = "sine", duration = 0.15, peak = 0.12, when = 0) {
+    function playTone(
+        freq,
+        type = "sine",
+        duration = 0.15,
+        peak = 0.12,
+        when = 0,
+    ) {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = type;
@@ -1068,14 +1204,14 @@ function playSound(type) {
     } else if (type === "start") {
         // pleasant two-tone chime
         playTone(880, "sine", 0.22, 0.14, 0);
-        playTone(1320, "sine", 0.28, 0.10, 0.06);
+        playTone(1320, "sine", 0.28, 0.1, 0.06);
     } else if (type === "10sec") {
         // two quick rising beeps
-        playTone(600, "sine", 0.12, 0.10, 0);
-        playTone(750, "sine", 0.12, 0.10, 0.12);
+        playTone(600, "sine", 0.12, 0.1, 0);
+        playTone(750, "sine", 0.12, 0.1, 0.12);
     } else if (type === "5sec") {
         // brief alert
-        playTone(1000, "triangle", 0.10, 0.09, 0);
+        playTone(1000, "triangle", 0.1, 0.09, 0);
     } else {
         // default short click
         playTone(800, "sine", 0.12, 0.08, 0);
@@ -1201,7 +1337,10 @@ stopBtn.addEventListener("click", () => {
     editMinutes.value = Math.floor(elapsedTime / 60000);
     editSeconds.value = Math.floor((elapsedTime % 60000) / 1000);
     saveModal.classList.remove("hidden");
-    setTimeout(() => { editMinutes.focus(); editMinutes.select(); }, 50);
+    setTimeout(() => {
+        editMinutes.focus();
+        editMinutes.select();
+    }, 50);
 });
 
 cancelSaveBtn.addEventListener("click", () => {
@@ -1227,7 +1366,9 @@ confirmSaveBtn.addEventListener("click", () => {
 
 // --- Rest Timer ---
 function startRestTimer() {
-    const restSecs = isNaN(parseInt(restTimeInput.value)) ? 0 : parseInt(restTimeInput.value);
+    const restSecs = isNaN(parseInt(restTimeInput.value))
+        ? 0
+        : parseInt(restTimeInput.value);
     if (restSecs <= 0) return;
     isResting = true;
     restEndTime = Date.now() + restSecs * 1000;
