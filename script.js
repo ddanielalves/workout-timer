@@ -20,6 +20,7 @@ const timerExerciseSelectWrapper = document.getElementById(
 const addTimerExerciseBtn = document.getElementById("addTimerExerciseBtn");
 const stretchDurationInput = document.getElementById("stretchDurationInput");
 const stretchRestInput = document.getElementById("stretchRestInput");
+const stretchSetRestInput = document.getElementById("stretchSetRestInput");
 const stretchSingleSideInput = document.getElementById(
     "stretchSingleSideInput",
 );
@@ -635,9 +636,26 @@ function completeStretchRun() {
     isStretchPaused = false;
     setStretchRunRemaining(0);
     playSound("start");
+    saveStretchRoutineLog();
     updateStretchRunDisplay();
     updateStretchRunControls();
     renderStretchRoutine();
+}
+
+function saveStretchRoutineLog() {
+    const durationSeconds = computeStretchTotalSeconds(stretchRunTotalSets);
+    const data = {
+        timestamp: new Date().toISOString(),
+        durationSeconds,
+        setsCompleted: stretchRunTotalSets,
+        setRestSeconds: stretchRunSetRest,
+        routineName: "Stretch Routine",
+        exercises: stretchRoutine.map((item) => item.name),
+    };
+
+    const logs = JSON.parse(localStorage.getItem("stretchRoutineLogs")) || [];
+    logs.push(data);
+    localStorage.setItem("stretchRoutineLogs", JSON.stringify(logs));
 }
 
 function resetStretchRunState() {
