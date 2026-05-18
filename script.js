@@ -38,6 +38,7 @@ const stretchRunDisplay = document.getElementById("stretchRunDisplay");
 const stretchRunCurrent = document.getElementById("stretchRunCurrent");
 const pauseStretchBtn = document.getElementById("pauseStretchBtn");
 const stopStretchBtn = document.getElementById("stopStretchBtn");
+const skipStretchBtn = document.getElementById("skipStretchBtn");
 
 // --- Stretch Run State ---
 let stretchRunIndex = 0;
@@ -391,6 +392,15 @@ if (stopStretchBtn) {
     stopStretchBtn.addEventListener("click", stopStretchRun);
 }
 
+if (skipStretchBtn) {
+    skipStretchBtn.addEventListener("click", () => {
+        if (!stretchRunPhase || stretchRunPhase === "complete") return;
+        cancelAnimationFrame(stretchRunTimerId);
+        isStretchPaused = false;
+        advanceStretchRun();
+    });
+}
+
 function showStretchRunCard(show) {
     if (stretchForm) stretchForm.classList.toggle("hidden", show);
     if (stretchRunCard) stretchRunCard.classList.toggle("hidden", !show);
@@ -405,6 +415,9 @@ function updateStretchRunControls() {
     if (stopStretchBtn) {
         stopStretchBtn.disabled =
             !stretchRunPhase || stretchRunPhase === "complete";
+    }
+    if (skipStretchBtn) {
+        skipStretchBtn.disabled = !stretchRunPhase || stretchRunPhase === "complete";
     }
 }
 
@@ -639,6 +652,9 @@ function resetStretchRunState() {
     }
     if (stopStretchBtn) {
         stopStretchBtn.disabled = true;
+    }
+    if (skipStretchBtn) {
+        skipStretchBtn.disabled = true;
     }
 }
 
