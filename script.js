@@ -63,6 +63,40 @@ const presetBtns = restPresets
     ? restPresets.querySelectorAll(".preset-btn")
     : [];
 
+function updateSettingEditPresets(field) {
+    if (!restPresets) return;
+
+    const values =
+        field === "voice"
+            ? [5, 10, 30]
+            : field === "prep"
+              ? [0, 5, 10]
+              : field === "rest"
+                ? [60, 90, 120, 180]
+                : [];
+
+    if (values.length === 0) {
+        restPresets.style.display = "none";
+        presetBtns.forEach((btn) => {
+            btn.style.display = "none";
+        });
+        return;
+    }
+
+    restPresets.style.display = "flex";
+    presetBtns.forEach((btn, index) => {
+        if (index < values.length) {
+            btn.dataset.value = values[index];
+            btn.textContent = `${values[index]}s`;
+            btn.style.display = "inline-flex";
+        } else {
+            btn.dataset.value = "";
+            btn.textContent = "";
+            btn.style.display = "none";
+        }
+    });
+}
+
 // Modal Elements
 const saveModal = document.getElementById("saveModal");
 const confirmSaveBtn = document.getElementById("confirmSaveBtn");
@@ -418,7 +452,8 @@ function updateStretchRunControls() {
             !stretchRunPhase || stretchRunPhase === "complete";
     }
     if (skipStretchBtn) {
-        skipStretchBtn.disabled = !stretchRunPhase || stretchRunPhase === "complete";
+        skipStretchBtn.disabled =
+            !stretchRunPhase || stretchRunPhase === "complete";
     }
 }
 
@@ -1106,19 +1141,19 @@ settingsPill.addEventListener("click", (e) => {
         settingEditInput.value = isNaN(parseInt(prepTimeInput.value))
             ? 0
             : parseInt(prepTimeInput.value);
-        restPresets.style.display = "none";
+        updateSettingEditPresets("prep");
     } else if (_currentEditField === "voice") {
         settingEditTitle.textContent = "Voice Start";
         settingEditInput.value = isNaN(parseInt(voiceStartInput.value))
             ? 0
             : parseInt(voiceStartInput.value);
-        restPresets.style.display = "none";
+        updateSettingEditPresets("voice");
     } else {
         settingEditTitle.textContent = "Rest Time";
         settingEditInput.value = isNaN(parseInt(restTimeInput.value))
             ? 0
             : parseInt(restTimeInput.value);
-        restPresets.style.display = "flex";
+        updateSettingEditPresets("rest");
     }
     settingEditModal.classList.remove("hidden");
     setTimeout(() => {
