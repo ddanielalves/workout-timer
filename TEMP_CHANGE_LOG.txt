@@ -1,0 +1,5 @@
+Temp log of changes:
+- Added openTimerHistoryBtn in index.html
+- Rewired openHistoryBtn to navigate to view-history
+- Added openTimerHistoryBtn listener to open timerHistoryModal
+- Added .view-title-row CSS

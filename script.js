@@ -125,6 +125,12 @@ const exerciseGoal = document.getElementById("exerciseGoal");
 const navBtns = document.querySelectorAll(".nav-btn");
 const views = document.querySelectorAll(".view");
 const openHistoryBtn = document.getElementById("openHistoryBtn");
+const openTimerHistoryBtn = document.getElementById("openTimerHistoryBtn");
+const timerHistoryModal = document.getElementById("timerHistoryModal");
+const closeHistoryModalBtn = document.getElementById("closeHistoryModalBtn");
+const timerHistoryList = document.getElementById("timerHistoryList");
+const historyTotalWorkoutsEl = document.getElementById("historyTotalWorkouts");
+const historyTotalSetsEl = document.getElementById("historyTotalSets");
 
 // --- Timer State ---
 let startTime, animationFrameId, prepEndTime;
@@ -239,7 +245,30 @@ navBtns.forEach((btn) => {
 });
 
 if (openHistoryBtn) {
+    // Keep the stopwatch tab history button navigating to the full History view
     openHistoryBtn.addEventListener("click", () => showView("view-history"));
+}
+
+if (openTimerHistoryBtn) {
+    // Timer tab history button opens the 7-day summary modal
+    openTimerHistoryBtn.addEventListener("click", () => {
+        renderTimerHistoryModal();
+        if (timerHistoryModal) timerHistoryModal.classList.remove("hidden");
+    });
+}
+
+if (closeHistoryModalBtn) {
+    closeHistoryModalBtn.addEventListener("click", () => {
+        timerHistoryModal.classList.add("hidden");
+    });
+}
+
+if (timerHistoryModal) {
+    timerHistoryModal.addEventListener("click", (e) => {
+        if (e.target === timerHistoryModal) {
+            timerHistoryModal.classList.add("hidden");
+        }
+    });
 }
 
 // --- 2. Exercise & Storage Logic ---
@@ -847,6 +876,76 @@ function createLogListItem(log) {
                     <span>${timeStr}</span>
                 </div>
             </li>`;
+}
+
+function getWorkoutLogs() {
+    return JSON.parse(localStorage.getItem("workoutLogs")) || [];
+}
+
+function getLast7DaysHistory(logs) {
+    const now = new Date();
+    const buckets = [];
+    for (let i = 6; i >= 0; i -= 1) {
+        const day = new Date(now);
+        day.setHours(0, 0, 0, 0);
+        day.setDate(day.getDate() - i);
+        buckets.push({
+            date: day,
+            key: day.toISOString().slice(0, 10),
+            workouts: 0,
+            sets: 0,
+        });
+    }
+
+    logs.forEach((log) => {
+        const timestamp = new Date(log.timestamp);
+        if (Number.isNaN(timestamp.getTime())) return;
+        const day = new Date(timestamp);
+        day.setHours(0, 0, 0, 0);
+        const key = day.toISOString().slice(0, 10);
+        const bucket = buckets.find((item) => item.key === key);
+        if (!bucket) return;
+
+        bucket.workouts += 1;
+        bucket.sets +=
+            log.sets != null ? Math.max(1, parseInt(log.sets, 10) || 1) : 1;
+    });
+
+    return buckets;
+}
+
+function renderTimerHistoryModal() {
+    if (!timerHistoryList || !historyTotalWorkoutsEl || !historyTotalSetsEl)
+        return;
+    const logs = getWorkoutLogs();
+    const buckets = getLast7DaysHistory(logs);
+
+    const totalWorkouts = buckets.reduce(
+        (sum, bucket) => sum + bucket.workouts,
+        0,
+    );
+    const totalSets = buckets.reduce((sum, bucket) => sum + bucket.sets, 0);
+
+    historyTotalWorkoutsEl.textContent = totalWorkouts;
+    historyTotalSetsEl.textContent = totalSets;
+
+    timerHistoryList.innerHTML =
+        buckets
+            .map((bucket) => {
+                const label = bucket.date.toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                });
+                const workoutsLabel =
+                    bucket.workouts === 1
+                        ? "1 workout"
+                        : `${bucket.workouts} workouts`;
+                const setsLabel =
+                    bucket.sets === 1 ? "1 set" : `${bucket.sets} sets`;
+                return `<li class="timer-history-item"><span>${label}</span><span>${workoutsLabel} · ${setsLabel}</span></li>`;
+            })
+            .join("") ||
+        `<li><span class="text-muted">No activity in the last 7 days</span></li>`;
 }
 
 function generateDummyData(exerciseName) {

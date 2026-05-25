@@ -43,7 +43,10 @@
 
         <!-- ── STRETCH VIEW ── -->
         <main id="view-stretch" class="view">
-            <h2 class="view-title">Stretch Timer</h2>
+            <div class="view-title-row">
+                <h2 class="view-title">Stretch Timer</h2>
+                <button id="openTimerHistoryBtn" class="btn subtle-link-btn">History</button>
+            </div>
 
             <div class="stretch-form">
                 <div id="timerExerciseSelectWrapper" class="stretch-exercise-picker">
@@ -223,6 +226,27 @@
                     <button id="cancelSaveBtn" class="btn secondary-btn">Discard</button>
                     <button id="confirmSaveBtn" class="btn primary-btn">Save</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="timerHistoryModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>7-Day History</h3>
+                    <button id="closeHistoryModalBtn" class="btn secondary-btn">Close</button>
+                </div>
+                <p class="sub-text">Workouts and sets completed over the last 7 days.</p>
+                <div id="timerHistoryTotals" class="history-summary">
+                    <div>
+                        <strong id="historyTotalWorkouts">0</strong>
+                        <span>Workouts</span>
+                    </div>
+                    <div>
+                        <strong id="historyTotalSets">0</strong>
+                        <span>Sets</span>
+                    </div>
+                </div>
+                <ul id="timerHistoryList" class="data-list"></ul>
             </div>
         </div>
 
