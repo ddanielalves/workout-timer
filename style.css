@@ -349,7 +349,6 @@ select { flex: 1; background: var(--card-bg); color: var(--text-main); border: 1
 }
 
 .checkbox-item {
-    flex: 0 0 auto;
     background: rgba(255,255,255,0.04);
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -359,6 +358,8 @@ select { flex: 1; background: var(--card-bg); color: var(--text-main); border: 1
 }
 
 .checkbox-item .checkbox-label {
+    display: flex;
+    flex-direction: column;
     margin-bottom: 0 !important;
     gap: 6px;
     padding: 0 !important;
